@@ -38,9 +38,9 @@ export function SiteFooter() {
         <div>
           <h2 className="site-footer__heading">Contact</h2>
           <div className="site-footer__contact">
-            <p><Mail size={15} /> support@hazi.ng</p>
-            <p><Phone size={15} /> +234 800 HAZI NG</p>
-            <p><MessageCircle size={15} /> WhatsApp support via ticket page</p>
+            <p><Mail size={15} /> hello@hazi.ng</p>
+            <p><Phone size={15} /> 09029840305</p>
+            <p><MessageCircle size={15} /> WhatsApp: 09029840305</p>
             <p><MapPin size={15} /> Lagos, Nigeria</p>
           </div>
         </div>

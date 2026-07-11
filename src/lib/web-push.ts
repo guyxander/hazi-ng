@@ -20,7 +20,7 @@ function configureWebPush() {
     throw new Error("VAPID keys are not configured.");
   }
 
-  webPush.setVapidDetails("mailto:support@hazi.ng", publicKey, privateKey);
+  webPush.setVapidDetails("mailto:hello@hazi.ng", publicKey, privateKey);
 }
 
 export function isWebPushConfigured() {

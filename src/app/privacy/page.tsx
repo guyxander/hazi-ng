@@ -100,7 +100,8 @@ export default function PrivacyPage() {
         <h2>12. Contact</h2>
         <p>
           For privacy questions or data requests, contact <Link href="/support">Hazi.ng Support</Link> or email
-          support@hazi.ng. Include the email connected to your Hazi.ng account and a clear description of your request.
+          hello@hazi.ng. You can also reach Hazi.ng on WhatsApp at 09029840305. Include the email connected to your
+          Hazi.ng account and a clear description of your request.
         </p>
       </section>
     </main>

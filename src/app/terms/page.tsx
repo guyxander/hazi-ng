@@ -99,7 +99,8 @@ export default function TermsPage() {
         <h2>11. Changes and contact</h2>
         <p>
           We may update these terms as the product, law, or provider relationships change. For questions, complaints, or
-          dispute support, contact <Link href="/support">Hazi.ng Support</Link> or email support@hazi.ng.
+          dispute support, contact <Link href="/support">Hazi.ng Support</Link>, email hello@hazi.ng, or WhatsApp
+          09029840305.
         </p>
       </section>
     </main>
