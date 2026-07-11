@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Bell, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions";
 import { BottomNav } from "@/components/bottom-nav";
-import { MobileDashboardMenu, MobileNav } from "@/components/mobile-nav";
+import { MobileDashboardMenu } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteVisitTracker } from "@/components/site-visit-tracker";
 import { isAdminRole, isAgentRole } from "@/lib/roles";
@@ -53,7 +53,6 @@ export default async function RootLayout({
         <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(248,249,255,0.92)] backdrop-blur-xl">
           <nav className="site-header__nav container flex min-h-16 items-center justify-between gap-4">
             <div className="site-header__left flex min-w-0 items-center gap-2">
-              <MobileNav isAdmin={isAdmin} postHref={postHref} />
               <Link href="/" className="site-header__brand flex min-w-0 items-center gap-3 font-extrabold text-[var(--primary)]">
                 <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-white">H</span>
                 <span>Hazi.ng</span>
