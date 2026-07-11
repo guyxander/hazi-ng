@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Bell, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions";
 import { BottomNav } from "@/components/bottom-nav";
-import { MobileNav } from "@/components/mobile-nav";
+import { MobileDashboardMenu, MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteVisitTracker } from "@/components/site-visit-tracker";
 import { isAdminRole, isAgentRole } from "@/lib/roles";
@@ -38,22 +38,27 @@ export default async function RootLayout({
   const isAuthenticated = Boolean(user);
   const [{ data: profile }, { count: unreadNotifications }] = user && supabase
     ? await Promise.all([
-        supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("role, full_name").eq("id", user.id).maybeSingle(),
         supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null)
       ])
     : [{ data: null }, { count: 0 }];
   const isAdmin = isAdminRole(profile?.role);
+  const isAgent = isAgentRole(profile?.role);
   const postHref = isAgentRole(profile?.role) ? "/sell/agent" : "/sell";
+  const dashboardInitials = getDashboardInitials(profile?.full_name ?? user?.email);
 
   return (
     <html lang="en">
       <body>
         <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(248,249,255,0.92)] backdrop-blur-xl">
           <nav className="site-header__nav container flex min-h-16 items-center justify-between gap-4">
-            <Link href="/" className="site-header__brand flex items-center gap-3 font-extrabold text-[var(--primary)]">
-              <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-white">H</span>
-              <span>Hazi.ng</span>
-            </Link>
+            <div className="site-header__left flex min-w-0 items-center gap-2">
+              <Link href="/" className="site-header__brand flex min-w-0 items-center gap-3 font-extrabold text-[var(--primary)]">
+                <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-white">H</span>
+                <span>Hazi.ng</span>
+              </Link>
+              <MobileNav isAdmin={isAdmin} postHref={postHref} />
+            </div>
             <div className="hidden items-center gap-6 text-sm font-bold text-[var(--muted)] lg:flex">
               <Link href="/auctions" className="hover:text-[var(--primary)]">Auctions</Link>
               <Link href={postHref} className="hover:text-[var(--primary)]">Sell</Link>
@@ -80,7 +85,13 @@ export default async function RootLayout({
                 <ShieldCheck size={17} />
                 Post Item
               </Link>
-              <MobileNav isAuthenticated={isAuthenticated} isAdmin={isAdmin} unreadNotifications={unreadNotifications ?? 0} postHref={postHref} />
+              <MobileDashboardMenu
+                initials={dashboardInitials}
+                isAdmin={isAdmin}
+                isAgent={isAgent}
+                isAuthenticated={isAuthenticated}
+                unreadNotifications={unreadNotifications ?? 0}
+              />
             </div>
           </nav>
         </header>
@@ -95,4 +106,10 @@ export default async function RootLayout({
       </body>
     </html>
   );
+}
+
+function getDashboardInitials(value?: string | null) {
+  const compactName = (value ?? "").split("@")[0]?.replace(/[^a-z0-9]/gi, "") ?? "";
+
+  return (compactName.slice(0, 2).toUpperCase() || "HZ").padEnd(2, "Z");
 }
