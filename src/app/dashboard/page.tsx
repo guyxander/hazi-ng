@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Bookmark, Gavel, Package, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { BadgeCheck, Bell, Bookmark, Gavel, LayoutDashboard, Package, ShieldCheck, Sparkles, UserCircle, WalletCards } from "lucide-react";
 import { CopyReferralLink } from "@/components/copy-referral-link";
 import { StatCard } from "@/components/stat-card";
 import { formatNaira } from "@/lib/format";
+import { isAdminRole } from "@/lib/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const PREMIUM_PLAN_LABELS: Record<string, string> = {
@@ -71,7 +72,20 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <section>
+      <section className="dashboard-shell">
+        <aside className="dashboard-shell__menu dashboard-shell__menu--desktop" aria-label="Dashboard menu">
+          <p className="dashboard-shell__menu-title">Account</p>
+          <Link href="/dashboard/profile"><UserCircle size={17} /> Profile</Link>
+          <Link href="/dashboard"><LayoutDashboard size={17} /> Dashboard</Link>
+          <Link href="/dashboard/listings"><Package size={17} /> Your listings</Link>
+          <Link href="/dashboard/wallet"><WalletCards size={17} /> Wallet</Link>
+          <Link href="/dashboard/payout-settings"><WalletCards size={17} /> Payouts</Link>
+          <Link href="/dashboard/bids"><Gavel size={17} /> Bids</Link>
+          <Link href="/dashboard/verification"><BadgeCheck size={17} /> Verification</Link>
+          {isAdminRole(profile?.role) ? <Link href="/admin"><ShieldCheck size={17} /> Admin page</Link> : null}
+        </aside>
+
+        <div className="dashboard-shell__content">
           <section className="grid gap-4 md:grid-cols-5">
             <StatCard icon={Package} label="Listings" value={String(listingCount ?? 0)} hint="Seller auction inventory." />
             <StatCard icon={WalletCards} label="Wallet" value={formatNaira(walletBalance)} hint="Available, earnings, and refunds." />
@@ -120,6 +134,7 @@ export default async function DashboardPage() {
           )) : <p className="text-sm text-[var(--muted)]">No notifications yet.</p>}
         </div>
       </section>
+        </div>
       </section>
     </main>
   );

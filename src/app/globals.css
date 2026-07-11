@@ -351,6 +351,10 @@ canvas {
   box-shadow: 0 4px 18px rgba(11, 28, 48, 0.06);
 }
 
+.dashboard-shell__menu--desktop {
+  display: none;
+}
+
 .dashboard-shell__menu-title {
   padding: 8px 10px 6px;
   color: var(--muted);
@@ -1015,6 +1019,10 @@ canvas {
   .dashboard-shell__menu {
     position: sticky;
     top: 88px;
+  }
+
+  .dashboard-shell__menu--desktop {
+    display: grid;
   }
 
   .admin-operations-shell {
