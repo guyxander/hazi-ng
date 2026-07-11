@@ -40,14 +40,14 @@ export function SiteFooter() {
           <div className="site-footer__contact">
             <p><Mail size={15} /> hello@hazi.ng</p>
             <p><Phone size={15} /> 09029840305</p>
-            <p><MessageCircle size={15} /> WhatsApp: 09029840305</p>
+            <p><MessageCircle size={15} /> 09029840305</p>
             <p><MapPin size={15} /> Lagos, Nigeria</p>
           </div>
         </div>
       </div>
       <div className="container site-footer__bottom">
         <span>© {new Date().getFullYear()} Hazi.ng. All rights reserved.</span>
-        <span>Built for Nigerian marketplace users. Times shown in UTC+1.</span>
+        <span>Built for Nigerian marketplace users.</span>
       </div>
     </footer>
   );
