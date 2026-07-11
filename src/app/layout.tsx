@@ -53,11 +53,11 @@ export default async function RootLayout({
         <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[rgba(248,249,255,0.92)] backdrop-blur-xl">
           <nav className="site-header__nav container flex min-h-16 items-center justify-between gap-4">
             <div className="site-header__left flex min-w-0 items-center gap-2">
+              <MobileNav isAdmin={isAdmin} postHref={postHref} />
               <Link href="/" className="site-header__brand flex min-w-0 items-center gap-3 font-extrabold text-[var(--primary)]">
                 <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-white">H</span>
                 <span>Hazi.ng</span>
               </Link>
-              <MobileNav isAdmin={isAdmin} postHref={postHref} />
             </div>
             <div className="hidden items-center gap-6 text-sm font-bold text-[var(--muted)] lg:flex">
               <Link href="/auctions" className="hover:text-[var(--primary)]">Auctions</Link>
@@ -87,7 +87,6 @@ export default async function RootLayout({
               </Link>
               <MobileDashboardMenu
                 initials={dashboardInitials}
-                isAdmin={isAdmin}
                 isAgent={isAgent}
                 isAuthenticated={isAuthenticated}
                 unreadNotifications={unreadNotifications ?? 0}

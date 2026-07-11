@@ -7,11 +7,8 @@ import {
   BriefcaseBusiness,
   Gavel,
   LayoutDashboard,
-  LifeBuoy,
-  MessageSquareText,
   Package,
   ShieldCheck,
-  Sparkles,
   UserCircle,
   WalletCards,
   X
@@ -94,28 +91,23 @@ export function MobileNav({
 }
 
 const dashboardLinks = [
+  { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/listings", label: "Your listings", icon: Package },
-  { href: "/dashboard/orders", label: "Escrow", icon: MessageSquareText },
-  { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/wallet", label: "Wallet", icon: WalletCards },
   { href: "/dashboard/payouts", label: "Payouts", icon: BriefcaseBusiness },
   { href: "/dashboard/watchlist", label: "Saved auctions", icon: Bookmark },
   { href: "/dashboard/bids", label: "Bids", icon: Gavel },
-  { href: "/dashboard/verification", label: "Verification", icon: ShieldCheck },
-  { href: "/premium", label: "Premium", icon: Sparkles },
-  { href: "/support", label: "Support", icon: LifeBuoy }
+  { href: "/dashboard/verification", label: "Verification", icon: ShieldCheck }
 ];
 
 export function MobileDashboardMenu({
   initials,
-  isAdmin,
   isAgent,
   isAuthenticated,
   unreadNotifications
 }: {
   initials: string;
-  isAdmin: boolean;
   isAgent: boolean;
   isAuthenticated: boolean;
   unreadNotifications: number;
@@ -183,16 +175,6 @@ export function MobileDashboardMenu({
               >
                 <BriefcaseBusiness size={17} />
                 Agent dashboard
-              </Link>
-            ) : null}
-            {isAdmin ? (
-              <Link
-                href="/admin"
-                className="mobile-dashboard-link"
-                onClick={closeMenu}
-              >
-                <ShieldCheck size={17} />
-                Admin dashboard
               </Link>
             ) : null}
             <form action={signOut} className="pt-2">

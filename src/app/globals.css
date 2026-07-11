@@ -75,6 +75,7 @@ canvas {
 
 .mobile-dashboard-button {
   background: var(--primary);
+  border-radius: 999px;
   color: #ffffff;
   font-size: 13px;
   font-weight: 900;

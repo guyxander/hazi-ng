@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BadgeCheck, Bell, Bookmark, BriefcaseBusiness, Gavel, LifeBuoy, MessageSquareText, Package, Plus, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
-import { signOut } from "@/app/actions";
+import { Bell, Bookmark, Gavel, Package, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import { CopyReferralLink } from "@/components/copy-referral-link";
 import { StatCard } from "@/components/stat-card";
 import { formatNaira } from "@/lib/format";
-import { isAdminRole, isAgentRole } from "@/lib/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const PREMIUM_PLAN_LABELS: Record<string, string> = {
@@ -57,7 +55,6 @@ export default async function DashboardPage() {
 
   const walletBalance = Number(wallet?.available_balance ?? 0) + Number(wallet?.earnings_balance ?? 0) + Number(wallet?.refund_balance ?? 0);
   const referralLink = `https://hazi.ng/auth?mode=signup&ref=${user.id}`;
-  const newAuctionHref = isAgentRole(profile?.role) ? "/sell/agent" : "/sell";
 
   return (
     <main className="container py-10">
@@ -74,26 +71,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <section className="dashboard-shell">
-        <aside className="dashboard-shell__menu" aria-label="Dashboard menu">
-          <p className="dashboard-shell__menu-title">Dashboard</p>
-          <Link href={newAuctionHref} className="dashboard-shell__menu-primary"><Plus size={17} /> New auction</Link>
-          <Link href="/dashboard/listings"><Package size={17} /> Your listings</Link>
-          <Link href="/dashboard/orders"><MessageSquareText size={17} /> Escrow</Link>
-          <Link href="/dashboard/profile"><BadgeCheck size={17} /> Profile</Link>
-          <Link href="/dashboard/wallet"><WalletCards size={17} /> Wallet</Link>
-          <Link href="/dashboard/payout-settings"><WalletCards size={17} /> Payouts</Link>
-          <Link href="/dashboard/watchlist"><Bookmark size={17} /> Saved auctions</Link>
-          <Link href="/dashboard/bids"><Gavel size={17} /> Bids</Link>
-          <Link href="/dashboard/verification"><ShieldCheck size={17} /> Verification</Link>
-          <Link href="/premium"><Sparkles size={17} /> Premium</Link>
-          <Link href="/support"><LifeBuoy size={17} /> Support</Link>
-          {isAgentRole(profile?.role) ? <Link href="/dashboard/agent"><BriefcaseBusiness size={17} /> Agent dashboard</Link> : null}
-          {isAdminRole(profile?.role) ? <Link href="/admin"><ShieldCheck size={17} /> Admin dashboard</Link> : null}
-          <form action={signOut}><button type="submit"><ShieldCheck size={17} /> Sign out</button></form>
-        </aside>
-
-        <div className="dashboard-shell__content">
+      <section>
           <section className="grid gap-4 md:grid-cols-5">
             <StatCard icon={Package} label="Listings" value={String(listingCount ?? 0)} hint="Seller auction inventory." />
             <StatCard icon={WalletCards} label="Wallet" value={formatNaira(walletBalance)} hint="Available, earnings, and refunds." />
@@ -142,7 +120,6 @@ export default async function DashboardPage() {
           )) : <p className="text-sm text-[var(--muted)]">No notifications yet.</p>}
         </div>
       </section>
-        </div>
       </section>
     </main>
   );
