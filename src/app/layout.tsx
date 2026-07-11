@@ -89,7 +89,6 @@ export default async function RootLayout({
                 initials={dashboardInitials}
                 isAgent={isAgent}
                 isAuthenticated={isAuthenticated}
-                unreadNotifications={unreadNotifications ?? 0}
               />
             </div>
           </nav>

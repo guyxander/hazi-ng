@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import {
-  Bell,
-  Bookmark,
   BriefcaseBusiness,
   Gavel,
   LayoutDashboard,
@@ -96,7 +94,6 @@ const dashboardLinks = [
   { href: "/dashboard/listings", label: "Your listings", icon: Package },
   { href: "/dashboard/wallet", label: "Wallet", icon: WalletCards },
   { href: "/dashboard/payouts", label: "Payouts", icon: BriefcaseBusiness },
-  { href: "/dashboard/watchlist", label: "Saved auctions", icon: Bookmark },
   { href: "/dashboard/bids", label: "Bids", icon: Gavel },
   { href: "/dashboard/verification", label: "Verification", icon: ShieldCheck }
 ];
@@ -104,13 +101,11 @@ const dashboardLinks = [
 export function MobileDashboardMenu({
   initials,
   isAgent,
-  isAuthenticated,
-  unreadNotifications
+  isAuthenticated
 }: {
   initials: string;
   isAgent: boolean;
   isAuthenticated: boolean;
-  unreadNotifications: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -141,17 +136,6 @@ export function MobileDashboardMenu({
           className="mobile-menu-panel"
         >
           <div className="container grid gap-2 p-0">
-            <Link
-              href="/dashboard/notifications"
-              className="mobile-dashboard-link relative"
-              onClick={closeMenu}
-            >
-              <Bell size={17} />
-              Alerts
-              {unreadNotifications ? (
-                <span className="notification-count">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
-              ) : null}
-            </Link>
             {dashboardLinks.map((link) => {
               const Icon = link.icon;
 
