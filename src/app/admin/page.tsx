@@ -3,26 +3,20 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Banknote,
-  BarChart3,
   BellRing,
   BriefcaseBusiness,
   CircleDollarSign,
   ClipboardList,
-  CreditCard,
   Eye,
-  FileText,
-  HandCoins,
-  Headphones,
   HeartPulse,
-  IdCard,
   Landmark,
-  ScrollText,
   ShieldAlert,
   TriangleAlert,
   Truck,
   Users
 } from "lucide-react";
-import { adminDeleteAuction, adminUpdateAuctionStatus, resolveDispute } from "@/app/actions";
+import { resolveDispute } from "@/app/actions";
+import { AdminOperationsNav } from "@/components/admin-operations-nav";
 import { requireAdmin } from "@/lib/supabase/admin";
 import { formatNaira } from "@/lib/format";
 
@@ -33,7 +27,7 @@ export default async function AdminPage() {
   const sevenDaysAgo = new Date(todayStart);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const [{ count: auctions }, { count: users }, { count: reports }, { count: suspendedUsers }, { count: agentLeads }, { count: pendingPayments }, { count: pendingPayouts }, { count: activeDeliveries }, { count: queuedExternal }, { count: auditEvents }, { count: openErrors }, { count: totalVisits }, { count: todayVisits }, { count: weekVisits }, { data: latest }, { data: disputes }, { data: premiumRows }] = supabase
+  const [{ count: auctions }, { count: users }, { count: reports }, { count: suspendedUsers }, { count: agentLeads }, { count: pendingPayments }, { count: pendingPayouts }, { count: activeDeliveries }, { count: queuedExternal }, { count: auditEvents }, { count: openErrors }, { count: totalVisits }, { count: todayVisits }, { count: weekVisits }, { data: disputes }, { data: premiumRows }] = supabase
     ? await Promise.all([
         supabase.from("auctions").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -49,7 +43,6 @@ export default async function AdminPage() {
         supabase.from("site_visit_events").select("*", { count: "exact", head: true }),
         supabase.from("site_visit_events").select("*", { count: "exact", head: true }).gte("visited_at", todayStart.toISOString()),
         supabase.from("site_visit_events").select("*", { count: "exact", head: true }).gte("visited_at", sevenDaysAgo.toISOString()),
-        supabase.from("auctions").select("id,title,status,location,created_at").order("created_at", { ascending: false }).limit(8),
         supabase
           .from("transactions")
           .select("id,auction_id,buyer_id,seller_id,amount,status,created_at,auctions(id,title,location)")
@@ -58,7 +51,7 @@ export default async function AdminPage() {
           .limit(8),
         supabase.from("premium_subscriptions").select("amount,status").eq("status", "active")
       ])
-    : [{ count: 3 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { data: [] }, { data: [] }, { data: [] }];
+    : [{ count: 3 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { data: [] }, { data: [] }];
 
   const premiumRevenue = premiumRows?.reduce((total, row) => total + Number(row.amount ?? 0), 0) ?? 0;
   const overviewItems = [
@@ -77,23 +70,6 @@ export default async function AdminPage() {
     { icon: TriangleAlert, label: "Errors", value: String(openErrors ?? 0), hint: "Unresolved production crashes." },
     { icon: CircleDollarSign, label: "Premium revenue", value: formatNaira(premiumRevenue), hint: "Active listing boosts." }
   ];
-  const adminLinks = [
-    { href: "/admin/health", label: "Health", icon: HeartPulse },
-    { href: "/admin/kyc", label: "KYC queue", icon: IdCard },
-    { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/payments", label: "Payments", icon: CreditCard },
-    { href: "/admin/payouts", label: "Payouts", icon: HandCoins },
-    { href: "/admin/deliveries", label: "Deliveries", icon: Truck },
-    { href: "/admin/notifications", label: "Notifications", icon: BellRing },
-    { href: "/admin/reports", label: "Reports", icon: FileText },
-    { href: "/admin/agent-leads", label: "Agent leads", icon: BriefcaseBusiness },
-    { href: "/admin/audit", label: "Audit trail", icon: ScrollText },
-    { href: "/admin/finance", label: "Finance", icon: Landmark },
-    { href: "/admin/analytics", label: "Site analytics", icon: BarChart3, primary: true },
-    { href: "/admin/support", label: "Support", icon: Headphones },
-    { href: "/admin/errors", label: "Errors", icon: TriangleAlert }
-  ];
-
   return (
     <main className="container py-10">
       <div className="mb-8">
@@ -102,15 +78,10 @@ export default async function AdminPage() {
         <p className="mt-2 text-[var(--muted)]">Marketplace overview for auctions, users, verification, reports, revenue, and premium placement.</p>
       </div>
 
-      <section className="dashboard-shell">
-        <aside className="dashboard-shell__menu" aria-label="Admin menu">
-          <p className="dashboard-shell__menu-title">Operations</p>
-          {adminLinks.map((item) => (
-            <AdminShortcutLink key={item.href} {...item} />
-          ))}
-        </aside>
+      <section className="admin-operations-shell">
+        <AdminOperationsNav />
 
-        <div className="dashboard-shell__content">
+        <div className="admin-operations-content">
           <section className="card overflow-hidden">
             <div className="border-b border-[var(--line)] p-5">
               <h2 className="text-2xl font-extrabold text-[var(--primary)]">Operations overview</h2>
@@ -122,32 +93,6 @@ export default async function AdminPage() {
               ))}
             </div>
           </section>
-          <section className="card mt-8 overflow-hidden">
-            <div className="border-b border-[var(--line)] p-5">
-              <h2 className="text-2xl font-extrabold text-[var(--primary)]">Latest auctions</h2>
-            </div>
-            <div className="divide-y divide-[var(--line)]">
-              {latest?.length ? latest.map((item) => (
-                <div key={item.id} className="grid gap-3 p-5 lg:grid-cols-[1fr_120px_150px_260px]">
-                  <strong>{item.title}</strong>
-                  <span className="font-bold text-[var(--muted)]">{item.status}</span>
-                  <span className="font-bold text-[var(--muted)]">{item.location}</span>
-                  <div className="flex flex-wrap gap-2 lg:justify-end">
-                    <form action={adminUpdateAuctionStatus}>
-                      <input type="hidden" name="auction_id" value={item.id} />
-                      <input type="hidden" name="status" value={item.status === "paused" ? "active" : "paused"} />
-                      <button className="button button-outline" type="submit">{item.status === "paused" ? "Resume" : "Pause"}</button>
-                    </form>
-                    <form action={adminDeleteAuction}>
-                      <input type="hidden" name="auction_id" value={item.id} />
-                      <button className="button button-outline text-red-700" type="submit">Delete</button>
-                    </form>
-                  </div>
-                </div>
-              )) : <p className="p-5 text-[var(--muted)]">No live Supabase auctions yet.</p>}
-            </div>
-          </section>
-
           <section className="card mt-8 overflow-hidden">
             <div className="border-b border-[var(--line)] p-5">
               <h2 className="text-2xl font-extrabold text-[var(--primary)]">Dispute queue</h2>
@@ -189,25 +134,6 @@ export default async function AdminPage() {
         </div>
       </section>
     </main>
-  );
-}
-
-function AdminShortcutLink({
-  href,
-  label,
-  icon: Icon,
-  primary = false
-}: {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  primary?: boolean;
-}) {
-  return (
-    <Link href={href} className={primary ? "dashboard-shell__menu-primary" : ""}>
-      <Icon size={17} />
-      {label}
-    </Link>
   );
 }
 

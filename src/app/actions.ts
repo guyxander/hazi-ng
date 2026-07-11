@@ -3617,6 +3617,7 @@ export async function adminUpdateAuctionStatus(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/auctions");
   revalidatePath("/admin/audit");
   revalidatePath("/auctions");
   revalidatePath(`/auctions/${auctionId}`);
@@ -3643,6 +3644,7 @@ export async function adminDeleteAuction(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/auctions");
   revalidatePath("/admin/audit");
   revalidatePath("/auctions");
 }
