@@ -25,10 +25,12 @@ const dashboardLinks = [
 
 export function MobileDashboardMenu({
   initials,
+  isAdmin,
   isAgent,
   isAuthenticated
 }: {
   initials: string;
+  isAdmin: boolean;
   isAgent: boolean;
   isAuthenticated: boolean;
 }) {
@@ -84,6 +86,16 @@ export function MobileDashboardMenu({
               >
                 <BriefcaseBusiness size={17} />
                 Agent dashboard
+              </Link>
+            ) : null}
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                className="mobile-dashboard-link"
+                onClick={closeMenu}
+              >
+                <ShieldCheck size={17} />
+                Admin page
               </Link>
             ) : null}
             <form action={signOut} className="pt-2">

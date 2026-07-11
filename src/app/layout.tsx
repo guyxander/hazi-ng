@@ -86,6 +86,7 @@ export default async function RootLayout({
               </Link>
               <MobileDashboardMenu
                 initials={dashboardInitials}
+                isAdmin={isAdmin}
                 isAgent={isAgent}
                 isAuthenticated={isAuthenticated}
               />
