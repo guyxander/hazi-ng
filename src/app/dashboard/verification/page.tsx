@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
 import { FileCheck2, ShieldCheck } from "lucide-react";
 import { submitVerification } from "@/app/actions";
+import { SuccessAnimation } from "@/components/success-animation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function VerificationPage() {
+export default async function VerificationPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ submitted?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
@@ -46,6 +52,12 @@ export default async function VerificationPage() {
         <h1 className="section-title mt-4">Verify your Hazi.ng account</h1>
         <p className="mt-2 max-w-2xl text-[var(--muted)]">Upload an ID document and a live selfie for liveness/face match review. Files are stored privately and shared through short-lived signed links.</p>
       </div>
+
+      {params?.submitted === "1" ? (
+        <div className="mb-6">
+          <SuccessAnimation title="Verification submitted" message="Your ID document and liveness selfie have been sent for admin review." />
+        </div>
+      ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <form action={submitVerification} encType="multipart/form-data" className="card space-y-5 p-6">

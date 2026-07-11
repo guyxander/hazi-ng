@@ -3943,6 +3943,7 @@ export async function submitVerification(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/verification");
+  redirect("/dashboard/verification?submitted=1");
 }
 
 export async function reviewVerification(formData: FormData) {
