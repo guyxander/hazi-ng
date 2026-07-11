@@ -3406,7 +3406,7 @@ export async function boostAuction(formData: FormData) {
       });
 
       if (boostError) {
-        redirect("/dashboard?boost=failed");
+        redirect("/dashboard/listings?boost=failed");
       }
 
       await supabase
@@ -3420,9 +3420,10 @@ export async function boostAuction(formData: FormData) {
         .eq("user_id", user.id);
 
       revalidatePath("/dashboard");
+      revalidatePath("/dashboard/listings");
       revalidatePath("/auctions");
       revalidatePath(`/auctions/${auctionId}`);
-      redirect("/dashboard?boost=referral");
+      redirect("/dashboard/listings?boost=referral");
     }
 
     redirect(`/premium?auction_id=${auctionId}&boost_plan=${plan}`);
@@ -3446,11 +3447,11 @@ export async function boostAuction(formData: FormData) {
       .maybeSingle();
 
     if (!currentAuction) {
-      redirect("/dashboard?boost=failed");
+      redirect("/dashboard/listings?boost=failed");
     }
 
     if (!currentAuction.is_premium && Number(activeBoosts ?? 0) >= boostLimit) {
-      redirect(`/dashboard?boost=limit-${boostLimit}`);
+      redirect(`/dashboard/listings?boost=limit-${boostLimit}`);
     }
   }
 
@@ -3460,14 +3461,15 @@ export async function boostAuction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/dashboard?boost=failed");
+    redirect("/dashboard/listings?boost=failed");
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/listings");
   revalidatePath("/auctions");
   revalidatePath(`/auctions/${auctionId}`);
   revalidatePath("/dashboard/notifications");
-  redirect("/dashboard?boost=active");
+  redirect("/dashboard/listings?boost=active");
 }
 
 export async function updateAuctionStatus(formData: FormData) {
@@ -3520,6 +3522,7 @@ export async function updateAuctionStatus(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/listings");
   revalidatePath("/auctions");
   revalidatePath(`/auctions/${auctionId}`);
 }
@@ -3581,6 +3584,7 @@ export async function relistAuction(formData: FormData) {
     .eq("status", "pending");
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/listings");
   revalidatePath("/auctions");
   revalidatePath(`/auctions/${auctionId}`);
 }

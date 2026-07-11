@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
         <h2>3. Legal basis and Nigerian data protection</h2>
         <p>
-          Hazi.ng aims to process personal data consistently with Nigeria's data protection framework, including the
+          Hazi.ng aims to process personal data consistently with Nigeria&apos;s data protection framework, including the
           Nigeria Data Protection Act, regulatory guidance from the Nigeria Data Protection Commission, contractual
           necessity, user consent where needed, legitimate marketplace safety interests, and compliance with applicable law.
         </p>
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         <h2>7. Cookies, analytics, and device data</h2>
         <p>
           We use cookies and local storage for sessions, authentication, preferences, visitor analytics, and product
-          performance. Admin and superadmin visits are excluded from Hazi.ng's internal site analytics. Vercel analytics
+          performance. Admin and superadmin visits are excluded from Hazi.ng&apos;s internal site analytics. Vercel analytics
           and other infrastructure providers may process technical usage data for reliability and performance.
         </p>
 

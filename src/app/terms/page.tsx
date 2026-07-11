@@ -39,12 +39,12 @@ export default function TermsPage() {
         </p>
         <p>
           Bids are binding offers. Buyers cannot bid above their available wallet balance. When a seller accepts a bid,
-          the accepted amount may be moved immediately from the buyer's wallet into escrow.
+          the accepted amount may be moved immediately from the buyer&apos;s wallet into escrow.
         </p>
 
         <h2>4. Wallet, escrow, release, and refunds</h2>
         <p>
-          Wallet balances are maintained by Hazi.ng's backend records and payment provider confirmations. Users must not
+          Wallet balances are maintained by Hazi.ng&apos;s backend records and payment provider confirmations. Users must not
           attempt to manipulate wallet balances, payment references, webhook events, or escrow records. Escrow funds are
           held for the accepted transaction until release, refund, or dispute resolution.
         </p>

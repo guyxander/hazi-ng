@@ -73,9 +73,9 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     <main className="container py-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className="badge badge-trust"><PackageCheck size={14} /> Orders</span>
-          <h1 className="section-title mt-4">Purchases and sales</h1>
-          <p className="mt-2 max-w-2xl text-[var(--muted)]">Track escrow status, counterparties, and linked chats for accepted auctions.</p>
+          <span className="badge badge-trust"><PackageCheck size={14} /> Escrow</span>
+          <h1 className="section-title mt-4">Escrow chats</h1>
+          <p className="mt-2 max-w-2xl text-[var(--muted)]">Track accepted auctions, escrow status, counterparties, and linked transaction chats.</p>
         </div>
         <Link href="/dashboard" className="button button-outline">Back to dashboard</Link>
       </div>

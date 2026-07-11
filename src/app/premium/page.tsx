@@ -99,7 +99,7 @@ export default async function PremiumPage({
   const hasActivePremium = Boolean(activePremium);
 
   if (hasActivePremium && auctionId) {
-    redirect(`/dashboard?boost=subscription-ready`);
+    redirect(`/dashboard/listings?boost=subscription-ready`);
   }
 
   const errorMessage = query?.error === "payment"

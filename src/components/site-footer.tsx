@@ -11,7 +11,7 @@ export function SiteFooter() {
             <strong>Hazi.ng</strong>
           </Link>
           <p className="mt-3 max-w-md text-sm leading-6 text-[rgba(255,255,255,0.74)]">
-            Nigeria's trusted auction marketplace for decluttering, verified buyers and sellers, wallet escrow, agent-assisted sales, and safer used-item transactions.
+            Nigeria&apos;s trusted auction marketplace for decluttering, verified buyers and sellers, wallet escrow, agent-assisted sales, and safer used-item transactions.
           </p>
         </div>
 
