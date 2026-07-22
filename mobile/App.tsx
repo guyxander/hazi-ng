@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuctionCard } from "./src/components/AuctionCard";
 import { BrandHeader } from "./src/components/BrandHeader";
-import { getActiveAuctions } from "./src/lib/marketplace";
+import { loadCurrentAccount, signOutAccount, type MobileAccount } from "./src/lib/auth";
+import { getActiveAuctions, supabase } from "./src/lib/marketplace";
 import { ActivityScreen } from "./src/screens/ActivityScreen";
+import { AuthScreen } from "./src/screens/AuthScreen";
 import { AuctionDetailScreen } from "./src/screens/AuctionDetailScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SellScreen } from "./src/screens/SellScreen";
@@ -30,6 +32,17 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAuction, setSelectedAuction] = useState<MobileAuction | null>(null);
+  const [account, setAccount] = useState<MobileAccount | null>(null);
+  const [authVisible, setAuthVisible] = useState(false);
+
+  const refreshAccount = useCallback(async () => {
+    try {
+      setAccount(await loadCurrentAccount());
+    } catch (caught) {
+      setAccount(null);
+      Alert.alert("Account unavailable", caught instanceof Error ? caught.message : "Could not load your Hazi account.");
+    }
+  }, []);
 
   useEffect(() => {
     getActiveAuctions()
@@ -37,6 +50,18 @@ export default function App() {
       .catch(() => setError("We couldn't load auctions. Pull down and try again."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const initialTimer = setTimeout(() => void refreshAccount(), 0);
+    if (!supabase) return () => clearTimeout(initialTimer);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      setTimeout(() => void refreshAccount(), 0);
+    });
+    return () => {
+      clearTimeout(initialTimer);
+      subscription.unsubscribe();
+    };
+  }, [refreshAccount]);
 
   const visibleAuctions = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -48,12 +73,12 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <StatusBar style="light" />
-        <View style={styles.app}>
+        {authVisible ? <AuthScreen onClose={() => setAuthVisible(false)} onAuthenticated={() => { void refreshAccount(); setAuthVisible(false); }} /> : <View style={styles.app}>
           {selectedAuction ? (
-            <AuctionDetailScreen auction={selectedAuction} onBack={() => setSelectedAuction(null)} />
+            <AuctionDetailScreen auction={selectedAuction} authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} onBack={() => setSelectedAuction(null)} />
           ) : tab === "home" || tab === "find" ? (
             <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} onSelectAuction={setSelectedAuction} />
-          ) : tab === "sell" ? <SellScreen /> : tab === "activity" ? <ActivityScreen /> : <ProfileScreen />}
+          ) : tab === "sell" ? <SellScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
           {!selectedAuction ? <View style={styles.nav}>
             {tabs.map((item) => {
               const selected = item.key === tab;
@@ -68,7 +93,7 @@ export default function App() {
               );
             })}
           </View> : null}
-        </View>
+        </View>}
       </SafeAreaView>
     </SafeAreaProvider>
   );

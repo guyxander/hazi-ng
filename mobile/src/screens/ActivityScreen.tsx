@@ -10,14 +10,14 @@ const activityTypes = [
   ["alert-circle-outline", "Disputes", "Review open cases and evidence requests from Hazi support."]
 ] as const;
 
-export function ActivityScreen() {
+export function ActivityScreen({ authenticated, onRequireAuth }: { authenticated: boolean; onRequireAuth: () => void }) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader title="Your activity" subtitle="One timeline for every protected Hazi trade." />
       <View style={styles.summary}><View><Text style={styles.summaryLabel}>ACTIVE TRADES</Text><Text style={styles.summaryValue}>—</Text></View><Ionicons name="pulse" size={34} color={colors.success} /></View>
       <View style={styles.filters}>{["All", "Buying", "Selling"].map((filter, index) => <View key={filter} style={[styles.filter, index === 0 && styles.filterActive]}><Text style={[styles.filterText, index === 0 && styles.filterTextActive]}>{filter}</Text></View>)}</View>
-      <View style={styles.cards}>{activityTypes.map(([icon, title, copy]) => <Pressable key={title} style={styles.card} onPress={() => Alert.alert("Sign in required", `Sign in to view your Hazi ${title.toLowerCase()}.`)}><View style={styles.cardIcon}><Ionicons name={icon} size={22} color={colors.success} /></View><View style={styles.flex}><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
-      <View style={styles.empty}><Ionicons name="notifications-off-outline" size={30} color={colors.muted} /><Text style={styles.emptyTitle}>Sign in to load your activity</Text><Text style={styles.emptyCopy}>Private transaction data is only requested after authentication.</Text></View>
+      <View style={styles.cards}>{activityTypes.map(([icon, title, copy]) => <Pressable key={title} style={styles.card} onPress={authenticated ? () => Alert.alert(title, "Live account activity will load through the protected Hazi query.") : onRequireAuth}><View style={styles.cardIcon}><Ionicons name={icon} size={22} color={colors.success} /></View><View style={styles.flex}><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
+      <View style={styles.empty}><Ionicons name="notifications-off-outline" size={30} color={colors.muted} /><Text style={styles.emptyTitle}>{authenticated ? "No activity loaded yet" : "Sign in to load your activity"}</Text><Text style={styles.emptyCopy}>{authenticated ? "Protected activity queries are the next integration step." : "Private transaction data is only requested after authentication."}</Text></View>
     </ScrollView>
   );
 }

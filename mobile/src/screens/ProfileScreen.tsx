@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ScreenHeader } from "../components/ScreenHeader";
+import type { MobileAccount } from "../lib/auth";
 import { colors } from "../theme";
 
 const menu = [
@@ -12,14 +13,14 @@ const menu = [
   ["help-circle-outline", "Support", "Reports, disputes, and marketplace help"]
 ] as const;
 
-export function ProfileScreen() {
+export function ProfileScreen({ account, onRequireAuth, onSignOut }: { account: MobileAccount | null; onRequireAuth: () => void; onSignOut: () => Promise<void> }) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader title="Your Hazi account" subtitle="Trust, payments, listings, and support." />
-      <View style={styles.accountCard}><View style={styles.avatar}><Ionicons name="person" size={32} color={colors.text} /></View><View style={styles.flex}><Text style={styles.guest}>Guest account</Text><Text style={styles.guestCopy}>Sign in to load your verified Hazi profile and role.</Text></View></View>
-      <Pressable style={styles.primaryButton} onPress={() => Alert.alert("Authentication", "The next build will connect this screen to Hazi's existing Supabase Auth flow.")}><Text style={styles.primaryText}>Sign in or create account</Text></Pressable>
+      <View style={styles.accountCard}><View style={styles.avatar}><Ionicons name="person" size={32} color={colors.text} /></View><View style={styles.flex}><Text style={styles.guest}>{account?.fullName ?? "Guest account"}</Text><Text style={styles.guestCopy}>{account ? `${account.role} · ${account.verificationStatus}` : "Sign in to load your verified Hazi profile and role."}</Text></View></View>
+      <Pressable style={styles.primaryButton} onPress={account ? () => void onSignOut() : onRequireAuth}><Text style={styles.primaryText}>{account ? "Sign out" : "Sign in or create account"}</Text></Pressable>
       <Text style={styles.sectionTitle}>Account services</Text>
-      <View style={styles.menu}>{menu.map(([icon, title, copy]) => <Pressable key={title} style={styles.menuItem} onPress={() => Alert.alert("Sign in required", `Sign in to open ${title.toLowerCase()}.`)}><View style={styles.menuIcon}><Ionicons name={icon} size={21} color={colors.success} /></View><View style={styles.flex}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
+      <View style={styles.menu}>{menu.map(([icon, title, copy]) => <Pressable key={title} style={styles.menuItem} onPress={account ? () => Alert.alert(title, "This protected Hazi account section is ready for its live data query.") : onRequireAuth}><View style={styles.menuIcon}><Ionicons name={icon} size={21} color={colors.success} /></View><View style={styles.flex}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
       <View style={styles.trustNote}><Ionicons name="lock-closed" size={18} color={colors.success} /><Text style={styles.trustText}>Roles and permissions are loaded from trusted Hazi profile data—not editable account metadata.</Text></View>
     </ScrollView>
   );

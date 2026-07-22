@@ -10,7 +10,7 @@ const steps = [
   ["shield-checkmark-outline", "Verification", "Higher-trust sales may require identity and liveness checks."]
 ] as const;
 
-export function SellScreen() {
+export function SellScreen({ authenticated, onRequireAuth }: { authenticated: boolean; onRequireAuth: () => void }) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader title="Sell with Hazi" subtitle="Turn items you no longer need into trusted auctions." />
@@ -18,8 +18,8 @@ export function SellScreen() {
       <Text style={styles.sectionTitle}>Before you publish</Text>
       <View style={styles.steps}>{steps.map(([icon, title, copy], index) => <View key={title} style={styles.step}><View style={styles.number}><Text style={styles.numberText}>{index + 1}</Text></View><Ionicons name={icon} size={22} color={colors.success} /><View style={styles.flex}><Text style={styles.stepTitle}>{title}</Text><Text style={styles.stepCopy}>{copy}</Text></View></View>)}</View>
       <View style={styles.agentCard}><Ionicons name="people-outline" size={28} color={colors.text} /><View style={styles.flex}><Text style={styles.agentTitle}>Need hands-on help?</Text><Text style={styles.agentCopy}>Request an approved Hazi agent to inspect, photograph, and manage the auction. Agent-assisted sale splits remain 70% seller, 21% agent, and 9% Hazi.</Text></View></View>
-      <Pressable style={styles.primaryButton} onPress={() => Alert.alert("Sign in required", "Sign in and complete your Hazi profile before creating a listing.")}><Text style={styles.primaryText}>Sign in to start listing</Text></Pressable>
-      <Pressable style={styles.secondaryButton} onPress={() => Alert.alert("Agent request", "Sign in before requesting or assigning a Hazi declutter agent.")}><Text style={styles.secondaryText}>Request an agent</Text></Pressable>
+      <Pressable style={styles.primaryButton} onPress={authenticated ? () => Alert.alert("Listing checks", "The listing builder will verify your Hazi profile and role before publishing.") : onRequireAuth}><Text style={styles.primaryText}>{authenticated ? "Start guided listing" : "Sign in to start listing"}</Text></Pressable>
+      <Pressable style={styles.secondaryButton} onPress={authenticated ? () => Alert.alert("Agent request", "Agent assignment will use Hazi's existing approved-agent workflow.") : onRequireAuth}><Text style={styles.secondaryText}>Request an agent</Text></Pressable>
     </ScrollView>
   );
 }

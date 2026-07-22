@@ -6,7 +6,7 @@ import type { MobileAuction } from "../types";
 
 const money = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
 
-export function AuctionDetailScreen({ auction, onBack }: { auction: MobileAuction; onBack: () => void }) {
+export function AuctionDetailScreen({ auction, authenticated, onRequireAuth, onBack }: { auction: MobileAuction; authenticated: boolean; onRequireAuth: () => void; onBack: () => void }) {
   const minimumBid = auction.current_bid ?? auction.reserve_price ?? auction.seller_price * 0.5;
 
   return (
@@ -36,10 +36,10 @@ export function AuctionDetailScreen({ auction, onBack }: { auction: MobileAuctio
         <Term icon="lock-closed-outline" text="A seller-accepted bid is moved into escrow." />
         <Term icon="cube-outline" text="Pickup or delivery is agreed before receipt confirmation." />
       </View>
-      <Pressable style={styles.primaryButton} onPress={() => Alert.alert("Sign in required", "Sign in and fund your Hazi wallet before placing a binding bid.")}>
-        <Text style={styles.primaryButtonText}>Sign in to place bid</Text>
+      <Pressable style={styles.primaryButton} onPress={authenticated ? () => Alert.alert("Wallet check required", "The next bidding step will validate your live Hazi wallet balance before accepting a binding bid.") : onRequireAuth}>
+        <Text style={styles.primaryButtonText}>{authenticated ? "Continue to wallet check" : "Sign in to place bid"}</Text>
       </Pressable>
-      <Pressable style={styles.secondaryButton} onPress={() => Alert.alert("Watchlist", "Sign in to save this auction to your Hazi watchlist.")}><Ionicons name="heart-outline" size={20} color={colors.text} /><Text style={styles.secondaryText}>Add to watchlist</Text></Pressable>
+      <Pressable style={styles.secondaryButton} onPress={authenticated ? () => Alert.alert("Watchlist", "Watchlist persistence will use the authenticated Hazi account.") : onRequireAuth}><Ionicons name="heart-outline" size={20} color={colors.text} /><Text style={styles.secondaryText}>Add to watchlist</Text></Pressable>
     </ScrollView>
   );
 }
