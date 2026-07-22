@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuctionCard } from "./src/components/AuctionCard";
 import { getActiveAuctions } from "./src/lib/marketplace";
 import { colors } from "./src/theme";
@@ -38,30 +39,32 @@ export default function App() {
   }, [auctions, query]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="light" />
-      <View style={styles.app}>
-        {tab === "home" || tab === "find" ? (
-          <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} />
-        ) : (
-          <ProtectedWorkflow tab={tab} />
-        )}
-        <View style={styles.nav}>
-          {tabs.map((item) => {
-            const selected = item.key === tab;
-            const central = item.key === "sell";
-            return (
-              <Pressable key={item.key} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setTab(item.key)} style={styles.navItem}>
-                <View style={[central && styles.sellButton, selected && !central && styles.selectedIcon]}>
-                  <Ionicons name={item.icon} size={central ? 32 : 24} color={central || selected ? colors.white : colors.muted} />
-                </View>
-                <Text style={[styles.navLabel, selected && styles.navLabelSelected]}>{item.label}</Text>
-              </Pressable>
-            );
-          })}
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <View style={styles.app}>
+          {tab === "home" || tab === "find" ? (
+            <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} />
+          ) : (
+            <ProtectedWorkflow tab={tab} />
+          )}
+          <View style={styles.nav}>
+            {tabs.map((item) => {
+              const selected = item.key === tab;
+              const central = item.key === "sell";
+              return (
+                <Pressable key={item.key} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setTab(item.key)} style={styles.navItem}>
+                  <View style={[central && styles.sellButton, selected && !central && styles.selectedIcon]}>
+                    <Ionicons name={item.icon} size={central ? 32 : 24} color={central || selected ? colors.white : colors.muted} />
+                  </View>
+                  <Text style={[styles.navLabel, selected && styles.navLabelSelected]}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
