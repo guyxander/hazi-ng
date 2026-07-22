@@ -8,6 +8,7 @@ import { BrandHeader } from "./src/components/BrandHeader";
 import { loadCurrentAccount, signOutAccount, type MobileAccount } from "./src/lib/auth";
 import { getActiveAuctions, supabase } from "./src/lib/marketplace";
 import { ActivityScreen } from "./src/screens/ActivityScreen";
+import { AccountSectionScreen, type AccountSection } from "./src/screens/AccountSectionScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { AuctionDetailScreen } from "./src/screens/AuctionDetailScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
@@ -34,6 +35,7 @@ export default function App() {
   const [selectedAuction, setSelectedAuction] = useState<MobileAuction | null>(null);
   const [account, setAccount] = useState<MobileAccount | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
+  const [accountSection, setAccountSection] = useState<AccountSection | null>(null);
 
   const refreshAccount = useCallback(async () => {
     try {
@@ -74,12 +76,14 @@ export default function App() {
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <StatusBar style="light" />
         {authVisible ? <AuthScreen onClose={() => setAuthVisible(false)} onAuthenticated={() => { void refreshAccount(); setAuthVisible(false); }} /> : <View style={styles.app}>
-          {selectedAuction ? (
+          {accountSection ? (
+            <AccountSectionScreen section={accountSection} account={account} onBack={() => setAccountSection(null)} onRequireAuth={() => setAuthVisible(true)} />
+          ) : selectedAuction ? (
             <AuctionDetailScreen auction={selectedAuction} authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} onBack={() => setSelectedAuction(null)} />
           ) : tab === "home" || tab === "find" ? (
             <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} onSelectAuction={setSelectedAuction} />
-          ) : tab === "sell" ? <SellScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
-          {!selectedAuction ? <View style={styles.nav}>
+          ) : tab === "sell" ? <SellScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onOpenSection={setAccountSection} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
+          {!selectedAuction && !accountSection ? <View style={styles.nav}>
             {tabs.map((item) => {
               const selected = item.key === tab;
               const central = item.key === "sell";

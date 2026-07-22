@@ -1,26 +1,27 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ScreenHeader } from "../components/ScreenHeader";
 import type { MobileAccount } from "../lib/auth";
 import { colors } from "../theme";
+import type { AccountSection } from "./AccountSectionScreen";
 
 const menu = [
-  ["shield-checkmark-outline", "Verification", "Identity, phone, and liveness checks"],
-  ["wallet-outline", "Wallet", "Balance, funding, escrow, and refunds"],
-  ["card-outline", "Payout settings", "Verified settlement account"],
-  ["list-outline", "My listings", "Draft, active, accepted, and closed auctions"],
-  ["people-outline", "Agent workspace", "Requests and assigned client sales"],
-  ["help-circle-outline", "Support", "Reports, disputes, and marketplace help"]
+  ["shield-checkmark-outline", "Verification", "Identity, phone, and liveness checks", "verification"],
+  ["wallet-outline", "Wallet", "Balance, funding, escrow, and refunds", "wallet"],
+  ["card-outline", "Payout settings", "Verified settlement account", "payouts"],
+  ["list-outline", "My listings", "Draft, active, accepted, and closed auctions", "listings"],
+  ["people-outline", "Agent workspace", "Requests and assigned client sales", "agent"],
+  ["help-circle-outline", "Support", "Reports, disputes, and marketplace help", "support"]
 ] as const;
 
-export function ProfileScreen({ account, onRequireAuth, onSignOut }: { account: MobileAccount | null; onRequireAuth: () => void; onSignOut: () => Promise<void> }) {
+export function ProfileScreen({ account, onRequireAuth, onSignOut, onOpenSection }: { account: MobileAccount | null; onRequireAuth: () => void; onSignOut: () => Promise<void>; onOpenSection: (section: AccountSection) => void }) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader title="Your Hazi account" subtitle="Trust, payments, listings, and support." />
       <View style={styles.accountCard}><View style={styles.avatar}><Ionicons name="person" size={32} color={colors.text} /></View><View style={styles.flex}><Text style={styles.guest}>{account?.fullName ?? "Guest account"}</Text><Text style={styles.guestCopy}>{account ? `${account.role} · ${account.verificationStatus}` : "Sign in to load your verified Hazi profile and role."}</Text></View></View>
       <Pressable style={styles.primaryButton} onPress={account ? () => void onSignOut() : onRequireAuth}><Text style={styles.primaryText}>{account ? "Sign out" : "Sign in or create account"}</Text></Pressable>
       <Text style={styles.sectionTitle}>Account services</Text>
-      <View style={styles.menu}>{menu.map(([icon, title, copy]) => <Pressable key={title} style={styles.menuItem} onPress={account ? () => Alert.alert(title, "This protected Hazi account section is ready for its live data query.") : onRequireAuth}><View style={styles.menuIcon}><Ionicons name={icon} size={21} color={colors.success} /></View><View style={styles.flex}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
+      <View style={styles.menu}>{menu.map(([icon, title, copy, section]) => <Pressable key={section} accessibilityRole="button" accessibilityLabel={title} style={styles.menuItem} onPress={() => onOpenSection(section)}><View style={styles.menuIcon}><Ionicons name={icon} size={21} color={colors.success} /></View><View style={styles.flex}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuCopy}>{copy}</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>)}</View>
       <View style={styles.trustNote}><Ionicons name="lock-closed" size={18} color={colors.success} /><Text style={styles.trustText}>Roles and permissions are loaded from trusted Hazi profile data—not editable account metadata.</Text></View>
     </ScrollView>
   );
