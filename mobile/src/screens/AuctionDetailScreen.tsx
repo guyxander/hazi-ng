@@ -1,13 +1,51 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenHeader } from "../components/ScreenHeader";
+import { loadAuctionInteraction, placeAuctionBid, setAuctionWatched, withdrawAuctionBid, type AuctionInteraction } from "../lib/marketplaceActions";
 import { colors } from "../theme";
 import type { MobileAuction } from "../types";
 
 const money = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
 
 export function AuctionDetailScreen({ auction, authenticated, onRequireAuth, onBack }: { auction: MobileAuction; authenticated: boolean; onRequireAuth: () => void; onBack: () => void }) {
-  const minimumBid = auction.current_bid ?? auction.reserve_price ?? auction.seller_price * 0.5;
+  const [interaction, setInteraction] = useState<AuctionInteraction | null>(null);
+  const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const displayedBid = interaction?.currentBid ?? auction.current_bid ?? auction.reserve_price ?? auction.seller_price * 0.5;
+
+  useEffect(() => {
+    let current = true;
+    loadAuctionInteraction(auction.id).then((result) => { if (current) setInteraction(result); }).catch(() => undefined);
+    return () => { current = false; };
+  }, [auction.id]);
+
+  async function submitBid() {
+    if (!authenticated) return onRequireAuth();
+    setLoading(true); setError(null);
+    try {
+      const result = await placeAuctionBid(auction.id, Number(amount.replaceAll(",", "")));
+      setInteraction(result); setAmount(""); Alert.alert("Bid placed", "Your binding bid is now visible on this auction.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not place this bid."); }
+    finally { setLoading(false); }
+  }
+
+  async function toggleWatchlist() {
+    if (!authenticated) return onRequireAuth();
+    const next = !interaction?.watched;
+    setLoading(true); setError(null);
+    try { await setAuctionWatched(auction.id, next); setInteraction((current) => current ? { ...current, watched: next } : { bids: [], currentBid: auction.current_bid, watched: next }); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Could not update your watchlist."); }
+    finally { setLoading(false); }
+  }
+
+  async function withdraw(bidId: string) {
+    setLoading(true); setError(null);
+    try { setInteraction(await withdrawAuctionBid(bidId, auction.id)); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Could not withdraw this bid."); }
+    finally { setLoading(false); }
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -18,7 +56,7 @@ export function AuctionDetailScreen({ auction, authenticated, onRequireAuth, onB
         {auction.is_premium ? <View style={styles.badge}><Text style={styles.badgeText}>FEATURED</Text></View> : null}
       </View>
       <View style={styles.bidPanel}>
-        <View><Text style={styles.label}>CURRENT BID</Text><Text style={styles.bid}>{money.format(minimumBid)}</Text></View>
+        <View><Text style={styles.label}>CURRENT BID</Text><Text style={styles.bid}>{money.format(displayedBid)}</Text></View>
         <View style={styles.status}><View style={styles.liveDot} /><Text style={styles.statusText}>LIVE</Text></View>
       </View>
       <View style={styles.trustCard}>
@@ -36,10 +74,15 @@ export function AuctionDetailScreen({ auction, authenticated, onRequireAuth, onB
         <Term icon="lock-closed-outline" text="A seller-accepted bid is moved into escrow." />
         <Term icon="cube-outline" text="Pickup or delivery is agreed before receipt confirmation." />
       </View>
-      <Pressable style={styles.primaryButton} onPress={authenticated ? () => Alert.alert("Wallet check required", "The next bidding step will validate your live Hazi wallet balance before accepting a binding bid.") : onRequireAuth}>
-        <Text style={styles.primaryButtonText}>{authenticated ? "Continue to wallet check" : "Sign in to place bid"}</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Text style={styles.sectionTitle}>Place a bid</Text>
+      <TextInput accessibilityLabel="Bid amount in naira" value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="Enter amount in NGN" placeholderTextColor={colors.muted} style={styles.input} />
+      <Pressable accessibilityRole="button" disabled={loading} style={[styles.primaryButton, loading && styles.disabled]} onPress={() => void submitBid()}>
+        {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryButtonText}>{authenticated ? "Place binding bid" : "Sign in to place bid"}</Text>}
       </Pressable>
-      <Pressable style={styles.secondaryButton} onPress={authenticated ? () => Alert.alert("Watchlist", "Watchlist persistence will use the authenticated Hazi account.") : onRequireAuth}><Ionicons name="heart-outline" size={20} color={colors.text} /><Text style={styles.secondaryText}>Add to watchlist</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={loading} style={styles.secondaryButton} onPress={() => void toggleWatchlist()}><Ionicons name={interaction?.watched ? "heart" : "heart-outline"} size={20} color={interaction?.watched ? colors.success : colors.text} /><Text style={styles.secondaryText}>{interaction?.watched ? "Remove from watchlist" : "Add to watchlist"}</Text></Pressable>
+      <Text style={styles.sectionTitle}>Visible bids</Text>
+      <View style={styles.bidList}>{interaction?.bids.length ? interaction.bids.map((bid) => <View key={bid.id} style={styles.bidRow}><View style={styles.flex}><Text style={styles.bidder}>{bid.isMine ? "Your bid" : bid.bidderName}</Text><Text style={styles.bidMeta}>{bid.status} · {new Date(bid.createdAt).toLocaleDateString("en-NG")}</Text></View><Text style={styles.bidAmount}>{money.format(bid.amount)}</Text>{bid.isMine && bid.status === "pending" ? <Pressable accessibilityRole="button" onPress={() => void withdraw(bid.id)}><Text style={styles.withdraw}>Withdraw</Text></Pressable> : null}</View>) : <Text style={styles.empty}>No bids yet. Be the first to place one.</Text>}</View>
     </ScrollView>
   );
 }
@@ -61,6 +104,8 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.text, fontSize: 18, fontWeight: "900", marginTop: 24, marginBottom: 11 },
   sellerCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 15 }, avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }, sellerNameRow: { flexDirection: "row", alignItems: "center", gap: 6 }, sellerName: { color: colors.text, fontSize: 15, fontWeight: "800" }, sellerMeta: { color: colors.muted, fontSize: 12, marginTop: 3 },
   terms: { gap: 10 }, term: { flexDirection: "row", gap: 11, padding: 14, borderRadius: 16, backgroundColor: colors.surface }, termText: { flex: 1, color: colors.muted, fontSize: 13, lineHeight: 19 },
+  input: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, color: colors.text, borderRadius: 17, paddingHorizontal: 16, height: 56, fontSize: 16 }, error: { color: "#ffaaa1", backgroundColor: "#3d2021", borderRadius: 14, padding: 13, marginTop: 18 }, disabled: { opacity: 0.6 },
   primaryButton: { backgroundColor: colors.primary, borderRadius: 18, padding: 17, alignItems: "center", marginTop: 25 }, primaryButtonText: { color: colors.white, fontSize: 16, fontWeight: "900" },
-  secondaryButton: { borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 15, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, marginTop: 10 }, secondaryText: { color: colors.text, fontSize: 14, fontWeight: "800" }
+  secondaryButton: { borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 15, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, marginTop: 10 }, secondaryText: { color: colors.text, fontSize: 14, fontWeight: "800" },
+  bidList: { gap: 9 }, bidRow: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14 }, bidder: { color: colors.text, fontWeight: "800", fontSize: 13 }, bidMeta: { color: colors.muted, fontSize: 10, textTransform: "capitalize", marginTop: 3 }, bidAmount: { color: colors.text, fontWeight: "900", fontSize: 14 }, withdraw: { color: "#ffaaa1", fontSize: 11, fontWeight: "800" }, empty: { color: colors.muted, textAlign: "center", padding: 20 }
 });
