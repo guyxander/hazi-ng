@@ -55,7 +55,6 @@ export default async function RootLayout({
   const isAdmin = isAdminRole(profile?.role);
   const canAccessAgentDashboard = canUseAgentDashboard(profile?.role, activePremium?.plan);
   const postHref = canAccessAgentDashboard ? "/sell/agent" : "/sell";
-  const dashboardHref = canAccessAgentDashboard ? "/dashboard/agent" : "/dashboard";
   const dashboardInitials = getDashboardInitials(profile?.full_name ?? user?.email);
 
   return (
@@ -73,7 +72,7 @@ export default async function RootLayout({
               <Link href="/auctions" className="hover:text-[var(--primary)]">Auctions</Link>
               <Link href={postHref} className="hover:text-[var(--primary)]">Sell</Link>
               <Link href="/agent" className="hover:text-[var(--primary)]">Agents</Link>
-              <Link href={dashboardHref} className="hover:text-[var(--primary)]">Dashboard</Link>
+              <Link href="/dashboard" className="hover:text-[var(--primary)]">Dashboard</Link>
               {canAccessAgentDashboard ? <Link href="/dashboard/agent" className="hover:text-[var(--primary)]">Agent dashboard</Link> : null}
               <Link href="/support" className="hover:text-[var(--primary)]">Support</Link>
               {isAdmin ? <Link href="/admin" className="hover:text-[var(--primary)]">Admin</Link> : null}
@@ -107,7 +106,7 @@ export default async function RootLayout({
         </header>
         {children}
         <SiteFooter />
-        <BottomNav postHref={postHref} dashboardHref={dashboardHref} />
+        <BottomNav postHref={postHref} />
         <Suspense fallback={null}>
           <SiteVisitTracker />
         </Suspense>
