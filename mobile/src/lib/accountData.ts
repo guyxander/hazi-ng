@@ -65,17 +65,20 @@ export async function loadAccountSectionData(section: DataAccountSection, userId
   const canUseWorkspace = role === "agent" || premium?.plan === "premium_agent";
   if (!canUseWorkspace) return { status: "Not an agent", tiles: [], rows: [] };
 
-  const [{ data: leads, error: leadsError }, { data: jobs, error: jobsError }] = await Promise.all([
+  const [{ data: leads, error: leadsError }, { data: available, error: availableError }, { data: jobs, error: jobsError }] = await Promise.all([
     supabase.from("agent_leads").select("id,item_summary,location,status,created_at").eq("assigned_agent_id", userId).order("created_at", { ascending: false }).limit(20),
+    supabase.from("agent_leads").select("id,item_summary,location,status,created_at").is("assigned_agent_id", null).in("status", ["new", "contacted"]).order("created_at", { ascending: true }).limit(10),
     supabase.from("agent_jobs").select("id,status,commission_amount,commission_status,created_at").eq("agent_id", userId).order("created_at", { ascending: false }).limit(20)
   ]);
   assertQuery(leadsError, "assigned agent requests");
+  assertQuery(availableError, "available agent requests");
   assertQuery(jobsError, "agent jobs");
   const activeLeads = leads?.filter((lead) => lead.status !== "closed").length ?? 0;
   return {
     status: "Agent access",
     tiles: [{ label: "Active requests", value: String(activeLeads) }, { label: "Jobs", value: String(jobs?.length ?? 0) }],
     rows: [
+      ...(available ?? []).map((lead) => ({ id: `available-${lead.id}`, title: lead.item_summary, detail: lead.location, status: `available · ${lead.status}` })),
       ...(leads ?? []).map((lead) => ({ id: `lead-${lead.id}`, title: lead.item_summary, detail: lead.location, status: lead.status })),
       ...(jobs ?? []).map((job) => ({ id: `job-${job.id}`, title: "Agent job", detail: `Commission ${money(job.commission_amount)}`, status: `${job.status} · ${job.commission_status}` }))
     ]

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuctionCard } from "./src/components/AuctionCard";
 import { BrandHeader } from "./src/components/BrandHeader";
@@ -31,6 +31,7 @@ export default function App() {
   const [auctions, setAuctions] = useState<MobileAuction[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAuction, setSelectedAuction] = useState<MobileAuction | null>(null);
   const [account, setAccount] = useState<MobileAccount | null>(null);
@@ -81,6 +82,8 @@ export default function App() {
     return () => listener.remove();
   }, []);
 
+  const refreshAuctions = useCallback(async () => { setRefreshing(true); setError(null); try { setAuctions(await getActiveAuctions()); } catch { setError("We couldn't refresh auctions. Check your connection and try again."); } finally { setRefreshing(false); } }, []);
+
   const visibleAuctions = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return auctions;
@@ -97,7 +100,7 @@ export default function App() {
           ) : selectedAuction ? (
             <AuctionDetailScreen auction={selectedAuction} authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} onBack={() => setSelectedAuction(null)} />
           ) : tab === "home" || tab === "find" ? (
-            <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} onSelectAuction={setSelectedAuction} />
+            <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} refreshing={refreshing} error={error} query={query} setQuery={setQuery} onRefresh={refreshAuctions} onSelectAuction={setSelectedAuction} />
           ) : tab === "sell" ? <SellScreen account={account} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen account={account} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onOpenSection={setAccountSection} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
           {!selectedAuction && !accountSection ? <View style={styles.nav}>
             {tabs.map((item) => {
@@ -119,12 +122,13 @@ export default function App() {
   );
 }
 
-function MarketplaceScreen({ tab, auctions, loading, error, query, setQuery, onSelectAuction }: { tab: "home" | "find"; auctions: MobileAuction[]; loading: boolean; error: string | null; query: string; setQuery: (value: string) => void; onSelectAuction: (auction: MobileAuction) => void }) {
+function MarketplaceScreen({ tab, auctions, loading, refreshing, error, query, setQuery, onRefresh, onSelectAuction }: { tab: "home" | "find"; auctions: MobileAuction[]; loading: boolean; refreshing: boolean; error: string | null; query: string; setQuery: (value: string) => void; onRefresh: () => void; onSelectAuction: (auction: MobileAuction) => void }) {
   return (
     <FlatList
       style={styles.screen}
       contentContainerStyle={styles.content}
       data={auctions}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.success} />}
       keyExtractor={(auction) => auction.id}
       ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
       ListHeaderComponent={(

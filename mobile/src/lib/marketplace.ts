@@ -5,6 +5,7 @@ import type { MobileAuction } from "../types";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const AUCTION_CACHE_KEY = "hazi:active-auctions:v1";
 
 export const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey, {
@@ -19,7 +20,7 @@ export const supabase = supabaseUrl && supabaseKey
 
 export async function getActiveAuctions(): Promise<MobileAuction[]> {
   if (!supabase) return demoAuctions;
-
+  try {
   const { data: auctions, error } = await supabase
     .from("auctions")
     .select("id,seller_id,title,location,seller_price,current_bid,reserve_price,status,ends_at,is_premium")
@@ -28,7 +29,7 @@ export async function getActiveAuctions(): Promise<MobileAuction[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  if (!auctions?.length) return [];
+  if (!auctions?.length) { await AsyncStorage.setItem(AUCTION_CACHE_KEY, "[]"); return []; }
 
   const auctionIds = auctions.map((auction) => auction.id);
   const sellerIds = [...new Set(auctions.map((auction) => auction.seller_id))];
@@ -37,7 +38,7 @@ export async function getActiveAuctions(): Promise<MobileAuction[]> {
     supabase.from("public_profiles").select("id,full_name,company_name,verification_status").in("id", sellerIds)
   ]);
 
-  return auctions.map((auction) => {
+  const result = auctions.map((auction) => {
     const seller = sellers?.find((profile) => profile.id === auction.seller_id);
     const image = images?.find((candidate) => candidate.auction_id === auction.id);
     return {
@@ -47,4 +48,11 @@ export async function getActiveAuctions(): Promise<MobileAuction[]> {
       seller_verified: seller?.verification_status === "verified"
     } as MobileAuction;
   });
+  await AsyncStorage.setItem(AUCTION_CACHE_KEY, JSON.stringify(result));
+  return result;
+  } catch (caught) {
+    const cached = await AsyncStorage.getItem(AUCTION_CACHE_KEY);
+    if (cached) return JSON.parse(cached) as MobileAuction[];
+    throw caught;
+  }
 }

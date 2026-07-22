@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, Text
 import { ScreenHeader } from "../components/ScreenHeader";
 import { deliver, dispute, loadActivity, loadTransaction, payWallet, readNotification, receive, sendMessage, submitEvidence, type ActivityKind, type ActivityRow, type TransactionDetail } from "../lib/activity";
 import type { MobileAccount } from "../lib/auth";
+import { supabase } from "../lib/marketplace";
 import { colors } from "../theme";
 
 const kinds: ActivityKind[] = ["bids", "orders", "notifications", "disputes"];
@@ -11,6 +12,7 @@ const money = (value?: number) => value?.toLocaleString("en-NG", { style: "curre
 export function ActivityScreen({ account, onRequireAuth }: { account: MobileAccount | null; onRequireAuth: () => void }) {
   const [kind, setKind] = useState<ActivityKind>("orders"); const [rows, setRows] = useState<ActivityRow[]>([]); const [selected, setSelected] = useState<TransactionDetail | null>(null); const [message, setMessage] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState<string | null>(null); const [reload, setReload] = useState(0);
   useEffect(() => { if (!account) return; let current = true; const timer = setTimeout(() => { setLoading(true); setError(null); loadActivity(kind).then((data) => { if (current) setRows(data); }).catch((e) => { if (current) setError(e instanceof Error ? e.message : "Could not load activity."); }).finally(() => { if (current) setLoading(false); }); }, 0); return () => { current = false; clearTimeout(timer); }; }, [account, kind, reload]);
+  useEffect(() => { const client = supabase; if (!account || !client) return; const channel = client.channel(`mobile-activity:${account.user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${account.user.id}` }, () => setReload((value) => value + 1)).subscribe(); return () => { void client.removeChannel(channel); }; }, [account]);
   async function open(row: ActivityRow) { if (kind === "notifications") { await readNotification(row.id); setReload((x) => x + 1); } else if (kind !== "bids") setSelected(await loadTransaction(row.id)); }
   async function act(name: "pay" | "deliver" | "receive" | "dispute" | "message") { if (!selected) return; setLoading(true); setError(null); try { if (name === "pay") await payWallet(selected.id); else if (name === "deliver") await deliver(selected.id); else if (name === "receive") await receive(selected.id); else if (name === "dispute") await dispute(selected.id); else { await sendMessage(selected.id, message); setMessage(""); } setSelected(await loadTransaction(selected.id)); setReload((x) => x + 1); } catch (e) { setError(e instanceof Error ? e.message : "Could not update transaction."); } finally { setLoading(false); } }
   if (!account) return <ScrollView style={s.screen} contentContainerStyle={s.content}><ScreenHeader title="Activity" subtitle="Bids, orders, escrow, notifications, and disputes." /><Text style={s.empty}>Sign in to load protected Hazi activity.</Text><Button label="Sign in" onPress={onRequireAuth} /></ScrollView>;
