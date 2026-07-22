@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   hero: { backgroundColor: colors.primary, borderRadius: 28, padding: 24, minHeight: 192, justifyContent: "flex-end", marginBottom: 18 },
   heroEyebrow: { color: colors.white, fontSize: 11, fontWeight: "900", letterSpacing: 1.4 },
   heroTitle: { color: colors.white, fontSize: 34, lineHeight: 37, fontWeight: "900", letterSpacing: -1.2, marginTop: 8, maxWidth: 310 },
-  heroCopy: { color: "#fff0e8", fontSize: 14, lineHeight: 21, marginTop: 10, maxWidth: 300 },
+  heroCopy: { color: "#d8f7ed", fontSize: 14, lineHeight: 21, marginTop: 10, maxWidth: 300 },
   search: { height: 54, borderRadius: 18, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 10, marginBottom: 24 },
   searchInput: { flex: 1, color: colors.text, fontSize: 15 },
   sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 15 },

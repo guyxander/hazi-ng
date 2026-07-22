@@ -5,8 +5,8 @@ export const colors = {
   border: "#333945",
   text: "#f8fafc",
   muted: "#a7adba",
-  primary: "#ff6b1a",
-  primarySoft: "#3b241b",
+  primary: "#00342b",
+  primarySoft: "#123d35",
   success: "#42d39b",
   white: "#ffffff"
 } as const;
