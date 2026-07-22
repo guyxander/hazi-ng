@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ScreenHeader } from "../components/ScreenHeader";
+import { loadAccountSectionData, type AccountSectionData, type DataAccountSection } from "../lib/accountData";
 import type { MobileAccount } from "../lib/auth";
 import { colors } from "../theme";
 
@@ -76,12 +78,32 @@ type AccountSectionScreenProps = { section: AccountSection; account: MobileAccou
 
 export function AccountSectionScreen({ section, account, onBack, onRequireAuth }: AccountSectionScreenProps) {
   const copy = sectionCopy[section];
+  const [data, setData] = useState<AccountSectionData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!account || !(["wallet", "payouts", "listings", "agent"] as AccountSection[]).includes(section)) return;
+    let current = true;
+    const loadTimer = setTimeout(() => {
+      setLoading(true);
+      setError(null);
+      setData(null);
+      loadAccountSectionData(section as DataAccountSection, account.user.id, account.role)
+        .then((result) => { if (current) setData(result); })
+        .catch((caught) => { if (current) setError(caught instanceof Error ? caught.message : "Could not load this account section."); })
+        .finally(() => { if (current) setLoading(false); });
+    }, 0);
+    return () => { current = false; clearTimeout(loadTimer); };
+  }, [account, section]);
+
+  const status = data?.status ?? copy.status(account);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader title={copy.title} subtitle={copy.subtitle} onBack={onBack} />
       <View style={styles.statusCard}>
         <View style={styles.largeIcon}><Ionicons name={copy.icon} size={28} color={colors.success} /></View>
-        <View style={styles.flex}><Text style={styles.statusLabel}>{copy.statusLabel}</Text><Text style={styles.statusValue}>{copy.status(account)}</Text></View>
+        <View style={styles.flex}><Text style={styles.statusLabel}>{copy.statusLabel}</Text><Text style={styles.statusValue}>{status}</Text></View>
       </View>
       {!account ? (
         <View style={styles.gate}>
@@ -90,6 +112,11 @@ export function AccountSectionScreen({ section, account, onBack, onRequireAuth }
           <Pressable accessibilityRole="button" style={styles.button} onPress={onRequireAuth}><Text style={styles.buttonText}>Sign in or create account</Text></Pressable>
         </View>
       ) : null}
+      {loading ? <ActivityIndicator accessibilityLabel="Loading protected account data" color={colors.success} style={styles.loader} /> : null}
+      {error ? <View style={styles.error}><Ionicons name="alert-circle-outline" size={20} color="#ffaaa1" /><Text style={styles.errorText}>{error}</Text></View> : null}
+      {data?.tiles.length ? <View style={styles.tiles}>{data.tiles.map((tile) => <View key={tile.label} style={styles.tile}><Text style={styles.tileLabel}>{tile.label}</Text><Text style={styles.tileValue}>{tile.value}</Text></View>)}</View> : null}
+      {data?.rows.length ? <><Text style={styles.sectionTitle}>Recent activity</Text><View style={styles.list}>{data.rows.map((row) => <View key={row.id} style={styles.row}><View style={styles.flex}><Text style={styles.itemTitle}>{row.title}</Text><Text style={styles.itemCopy}>{row.detail}</Text></View><Text style={styles.rowStatus}>{row.status.replaceAll("_", " ")}</Text></View>)}</View></> : null}
+      {data && !data.rows.length && section !== "payouts" ? <Text style={styles.empty}>No protected records are available in this section yet.</Text> : null}
       <Text style={styles.sectionTitle}>How this works</Text>
       <View style={styles.list}>{copy.items.map((item) => (
         <View key={item.title} style={styles.item}>
@@ -108,9 +135,12 @@ const styles = StyleSheet.create({
   largeIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
   statusLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" }, statusValue: { color: colors.text, fontSize: 21, fontWeight: "900", marginTop: 4, textTransform: "capitalize" },
   gate: { backgroundColor: colors.primarySoft, borderRadius: 20, padding: 17, marginTop: 14 }, gateCopy: { color: "#d8f7ed", fontSize: 13, lineHeight: 19, marginTop: 9 },
+  loader: { marginTop: 24 }, error: { flexDirection: "row", gap: 10, backgroundColor: "#3d2021", borderRadius: 16, padding: 14, marginTop: 14 }, errorText: { flex: 1, color: "#ffaaa1", fontSize: 12, lineHeight: 18 },
+  tiles: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 14 }, tile: { width: "48%", minHeight: 90, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 17, padding: 14, justifyContent: "space-between" }, tileLabel: { color: colors.muted, fontSize: 11, fontWeight: "700" }, tileValue: { color: colors.text, fontSize: 16, fontWeight: "900", marginTop: 9 },
   button: { backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.success, borderRadius: 15, padding: 14, alignItems: "center", marginTop: 14 }, buttonText: { color: colors.white, fontWeight: "900" },
   sectionTitle: { color: colors.text, fontSize: 19, fontWeight: "900", marginTop: 26, marginBottom: 12 }, list: { gap: 10 },
   item: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 15 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14 }, rowStatus: { color: colors.success, fontSize: 10, fontWeight: "800", maxWidth: 120, textAlign: "right", textTransform: "capitalize" }, empty: { color: colors.muted, textAlign: "center", fontSize: 12, lineHeight: 18, padding: 20 },
   itemIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }, itemTitle: { color: colors.text, fontSize: 14, fontWeight: "800" }, itemCopy: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
   note: { flexDirection: "row", gap: 10, backgroundColor: colors.surfaceRaised, borderRadius: 17, padding: 15, marginTop: 18 }, noteText: { flex: 1, color: colors.muted, fontSize: 11, lineHeight: 17 }
 });
