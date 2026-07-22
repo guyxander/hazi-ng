@@ -13,3 +13,7 @@ export function isSuperAdminRole(role: string | null | undefined) {
 export function isAgentRole(role: string | null | undefined) {
   return role === "agent";
 }
+
+export function canUseAgentDashboard(role: string | null | undefined, premiumPlan?: string | null) {
+  return isAgentRole(role) || premiumPlan === "premium_agent";
+}

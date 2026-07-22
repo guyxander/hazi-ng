@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { SellPublishForm } from "@/components/sell-publish-form";
-import { isAgentRole } from "@/lib/roles";
+import { canUseAgentDashboard } from "@/lib/roles";
 import { getCategories } from "@/lib/supabase/queries";
 import { getSafeUser } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,9 +19,19 @@ export default async function AgentSellPage({
     redirect("/auth?next=/sell/agent");
   }
 
-  const [{ data: profile }, { data: agentJobs }] = supabase
+  const [{ data: profile }, { data: activePremium }, { data: agentJobs }] = supabase
     ? await Promise.all([
         supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("premium_subscriptions")
+          .select("plan")
+          .eq("user_id", user.id)
+          .is("auction_id", null)
+          .eq("plan", "premium_agent")
+          .eq("status", "active")
+          .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+          .limit(1)
+          .maybeSingle(),
         supabase
           .from("agent_jobs")
           .select("id,requester_id,status,agent_leads(full_name,item_summary,location)")
@@ -30,9 +40,9 @@ export default async function AgentSellPage({
           .order("created_at", { ascending: false })
           .limit(50)
       ])
-    : [{ data: null }, { data: [] }];
+    : [{ data: null }, { data: null }, { data: [] }];
 
-  if (!isAgentRole(profile?.role)) {
+  if (!canUseAgentDashboard(profile?.role, activePremium?.plan)) {
     redirect("/agent/apply");
   }
 

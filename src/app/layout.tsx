@@ -10,7 +10,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { MobileDashboardMenu } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteVisitTracker } from "@/components/site-visit-tracker";
-import { isAdminRole, isAgentRole } from "@/lib/roles";
+import { canUseAgentDashboard, isAdminRole } from "@/lib/roles";
 import { getSafeUser } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import "./globals.css";
@@ -36,15 +36,26 @@ export default async function RootLayout({
   const supabase = await createSupabaseServerClient();
   const user = await getSafeUser(supabase);
   const isAuthenticated = Boolean(user);
-  const [{ data: profile }, { count: unreadNotifications }] = user && supabase
+  const [{ data: profile }, { count: unreadNotifications }, { data: activePremium }] = user && supabase
     ? await Promise.all([
         supabase.from("profiles").select("role, full_name").eq("id", user.id).maybeSingle(),
-        supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null)
+        supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
+        supabase
+          .from("premium_subscriptions")
+          .select("plan")
+          .eq("user_id", user.id)
+          .is("auction_id", null)
+          .eq("plan", "premium_agent")
+          .eq("status", "active")
+          .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+          .limit(1)
+          .maybeSingle()
       ])
-    : [{ data: null }, { count: 0 }];
+    : [{ data: null }, { count: 0 }, { data: null }];
   const isAdmin = isAdminRole(profile?.role);
-  const isAgent = isAgentRole(profile?.role);
-  const postHref = isAgentRole(profile?.role) ? "/sell/agent" : "/sell";
+  const canAccessAgentDashboard = canUseAgentDashboard(profile?.role, activePremium?.plan);
+  const postHref = canAccessAgentDashboard ? "/sell/agent" : "/sell";
+  const dashboardHref = canAccessAgentDashboard ? "/dashboard/agent" : "/dashboard";
   const dashboardInitials = getDashboardInitials(profile?.full_name ?? user?.email);
 
   return (
@@ -62,7 +73,8 @@ export default async function RootLayout({
               <Link href="/auctions" className="hover:text-[var(--primary)]">Auctions</Link>
               <Link href={postHref} className="hover:text-[var(--primary)]">Sell</Link>
               <Link href="/agent" className="hover:text-[var(--primary)]">Agents</Link>
-              <Link href="/dashboard" className="hover:text-[var(--primary)]">Dashboard</Link>
+              <Link href={dashboardHref} className="hover:text-[var(--primary)]">Dashboard</Link>
+              {canAccessAgentDashboard ? <Link href="/dashboard/agent" className="hover:text-[var(--primary)]">Agent dashboard</Link> : null}
               <Link href="/support" className="hover:text-[var(--primary)]">Support</Link>
               {isAdmin ? <Link href="/admin" className="hover:text-[var(--primary)]">Admin</Link> : null}
             </div>
@@ -87,7 +99,7 @@ export default async function RootLayout({
               <MobileDashboardMenu
                 initials={dashboardInitials}
                 isAdmin={isAdmin}
-                isAgent={isAgent}
+                canAccessAgentDashboard={canAccessAgentDashboard}
                 isAuthenticated={isAuthenticated}
               />
             </div>
@@ -95,7 +107,7 @@ export default async function RootLayout({
         </header>
         {children}
         <SiteFooter />
-        <BottomNav postHref={postHref} />
+        <BottomNav postHref={postHref} dashboardHref={dashboardHref} />
         <Suspense fallback={null}>
           <SiteVisitTracker />
         </Suspense>

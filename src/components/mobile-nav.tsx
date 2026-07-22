@@ -18,7 +18,7 @@ const dashboardLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/listings", label: "Your listings", icon: Package },
   { href: "/dashboard/wallet", label: "Wallet", icon: WalletCards },
-  { href: "/dashboard/payouts", label: "Payouts", icon: BriefcaseBusiness },
+  { href: "/dashboard/payout-settings", label: "Payouts", icon: BriefcaseBusiness },
   { href: "/dashboard/bids", label: "Bids", icon: Gavel },
   { href: "/dashboard/verification", label: "Verification", icon: ShieldCheck }
 ];
@@ -26,12 +26,12 @@ const dashboardLinks = [
 export function MobileDashboardMenu({
   initials,
   isAdmin,
-  isAgent,
+  canAccessAgentDashboard,
   isAuthenticated
 }: {
   initials: string;
   isAdmin: boolean;
-  isAgent: boolean;
+  canAccessAgentDashboard: boolean;
   isAuthenticated: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -78,9 +78,9 @@ export function MobileDashboardMenu({
                 </Link>
               );
             })}
-            {isAgent ? (
+            {canAccessAgentDashboard ? (
               <Link
-                href="/agent/dashboard"
+                href="/dashboard/agent"
                 className="mobile-dashboard-link"
                 onClick={closeMenu}
               >

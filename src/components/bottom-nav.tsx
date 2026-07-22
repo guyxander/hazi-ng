@@ -4,14 +4,20 @@ import Link from "next/link";
 import { Bookmark, Home, LayoutDashboard, MessageCircle, PlusSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export function BottomNav({ postHref = "/sell" }: { postHref?: string }) {
+export function BottomNav({
+  postHref = "/sell",
+  dashboardHref = "/dashboard"
+}: {
+  postHref?: string;
+  dashboardHref?: string;
+}) {
   const [visible, setVisible] = useState(true);
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/dashboard/watchlist", label: "Saved", icon: Bookmark },
     { href: postHref, label: "Post", icon: PlusSquare },
     { href: "/dashboard/orders", label: "Escrow", icon: MessageCircle },
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
+    { href: dashboardHref, label: "Dashboard", icon: LayoutDashboard }
   ];
 
   useEffect(() => {

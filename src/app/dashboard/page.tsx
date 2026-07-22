@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BadgeCheck, Bell, Bookmark, Gavel, LayoutDashboard, Package, ShieldCheck, Sparkles, UserCircle, WalletCards } from "lucide-react";
+import { Bell, Bookmark, Gavel, Package, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import { CopyReferralLink } from "@/components/copy-referral-link";
+import { DashboardAccountMenu } from "@/components/dashboard-account-menu";
 import { StatCard } from "@/components/stat-card";
 import { formatNaira } from "@/lib/format";
-import { isAdminRole } from "@/lib/roles";
+import { canUseAgentDashboard, isAdminRole } from "@/lib/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const PREMIUM_PLAN_LABELS: Record<string, string> = {
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
     redirect("/auth?next=/dashboard");
   }
 
-  const [{ count: listingCount }, { data: notifications }, { count: unreadNotifications }, { count: savedCount }, { count: bidCount }, { data: profile }, { data: wallet }, { count: referralCount }, { count: referralRewards }, { data: activePremium }] = await Promise.all([
+  const [{ count: listingCount }, { data: notifications }, { count: unreadNotifications }, { count: savedCount }, { count: bidCount }, { data: profile }, { data: wallet }, { count: referralCount }, { count: referralRewards }, { data: activePremium }, { data: activePremiumAgent }] = await Promise.all([
     supabase.from("auctions").select("*", { count: "exact", head: true }).or(`seller_id.eq.${user.id},listed_for_user_id.eq.${user.id}`),
     supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
     supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
@@ -51,11 +52,22 @@ export default async function DashboardPage() {
       .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
       .order("starts_at", { ascending: false })
       .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("premium_subscriptions")
+      .select("plan")
+      .eq("user_id", user.id)
+      .is("auction_id", null)
+      .eq("plan", "premium_agent")
+      .eq("status", "active")
+      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .limit(1)
       .maybeSingle()
   ]);
 
   const walletBalance = Number(wallet?.available_balance ?? 0) + Number(wallet?.earnings_balance ?? 0) + Number(wallet?.refund_balance ?? 0);
   const referralLink = `https://hazi.ng/auth?mode=signup&ref=${user.id}`;
+  const canAccessAgentDashboard = canUseAgentDashboard(profile?.role, activePremiumAgent?.plan);
 
   return (
     <main className="container py-10">
@@ -73,17 +85,7 @@ export default async function DashboardPage() {
       </div>
 
       <section className="dashboard-shell">
-        <aside className="dashboard-shell__menu dashboard-shell__menu--desktop" aria-label="Dashboard menu">
-          <p className="dashboard-shell__menu-title">Account</p>
-          <Link href="/dashboard/profile"><UserCircle size={17} /> Profile</Link>
-          <Link href="/dashboard"><LayoutDashboard size={17} /> Dashboard</Link>
-          <Link href="/dashboard/listings"><Package size={17} /> Your listings</Link>
-          <Link href="/dashboard/wallet"><WalletCards size={17} /> Wallet</Link>
-          <Link href="/dashboard/payout-settings"><WalletCards size={17} /> Payouts</Link>
-          <Link href="/dashboard/bids"><Gavel size={17} /> Bids</Link>
-          <Link href="/dashboard/verification"><BadgeCheck size={17} /> Verification</Link>
-          {isAdminRole(profile?.role) ? <Link href="/admin"><ShieldCheck size={17} /> Admin page</Link> : null}
-        </aside>
+        <DashboardAccountMenu canAccessAgentDashboard={canAccessAgentDashboard} isAdmin={isAdminRole(profile?.role)} />
 
         <div className="dashboard-shell__content">
           <section className="grid gap-4 md:grid-cols-5">

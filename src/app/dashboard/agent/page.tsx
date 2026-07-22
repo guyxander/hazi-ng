@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { BriefcaseBusiness, CheckCircle2, ClipboardCheck, PhoneCall, ShieldCheck } from "lucide-react";
 import { claimAgentLead, updateAgentJobStatus, updateAssignedAgentLeadStatus } from "@/app/actions";
 import { StatCard } from "@/components/stat-card";
-import { isAgentRole } from "@/lib/roles";
+import { canUseAgentDashboard } from "@/lib/roles";
 import { getSafeUser } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -22,13 +22,25 @@ export default async function AgentDashboardPage() {
     redirect("/auth?next=/dashboard/agent");
   }
 
-  const { data: profile } = await supabase
+  const [{ data: profile }, { data: activePremium }] = await Promise.all([
+    supabase
     .from("profiles")
     .select("full_name,role,verification_status,response_rate,rating")
     .eq("id", user.id)
-    .single();
+      .single(),
+    supabase
+      .from("premium_subscriptions")
+      .select("plan")
+      .eq("user_id", user.id)
+      .is("auction_id", null)
+      .eq("plan", "premium_agent")
+      .eq("status", "active")
+      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle()
+  ]);
 
-  const isAgent = isAgentRole(profile?.role);
+  const isAgent = canUseAgentDashboard(profile?.role, activePremium?.plan);
 
   if (!isAgent) {
     redirect("/agent/apply");

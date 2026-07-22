@@ -10,7 +10,7 @@ import { sendExternalNotification } from "@/lib/notifications";
 import { getCanonicalProductionOrigin } from "@/lib/site-url";
 import { getAutomationServerSecret } from "@/lib/server-secret";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ASSIGNABLE_PROFILE_ROLES, isAdminRole, isAgentRole, isSuperAdminRole, SELF_SELECTABLE_PROFILE_ROLES } from "@/lib/roles";
+import { ASSIGNABLE_PROFILE_ROLES, canUseAgentDashboard, isAdminRole, isSuperAdminRole, SELF_SELECTABLE_PROFILE_ROLES } from "@/lib/roles";
 
 const AUCTION_IMAGE_BUCKET = "auction-images";
 const VERIFICATION_DOCUMENT_BUCKET = "verification-documents";
@@ -201,6 +201,38 @@ async function requireAdminAction(next = "/admin/health") {
   return { supabase, user, profile };
 }
 
+async function requireAgentDashboardAction(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  message: string
+) {
+  if (!supabase) {
+    throw new Error("Supabase env vars are missing.");
+  }
+
+  const [{ data: profile }, { data: activePremium }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("premium_subscriptions")
+      .select("plan")
+      .eq("user_id", userId)
+      .is("auction_id", null)
+      .eq("plan", "premium_agent")
+      .eq("status", "active")
+      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle()
+  ]);
+
+  if (!canUseAgentDashboard(profile?.role, activePremium?.plan)) {
+    throw new Error(message);
+  }
+}
+
 async function upsertProfilePreservingAdmin(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
@@ -354,12 +386,24 @@ export async function createAuction(formData: FormData) {
 
   let linkedAgentJobId: string | null = null;
   let listedForUserId: string | null = null;
-  const { data: currentProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-  const currentUserIsAgent = isAgentRole(currentProfile?.role);
+  const [{ data: currentProfile }, { data: currentActivePremium }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("premium_subscriptions")
+      .select("plan")
+      .eq("user_id", user.id)
+      .is("auction_id", null)
+      .eq("plan", "premium_agent")
+      .eq("status", "active")
+      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle()
+  ]);
+  const currentUserIsAgent = canUseAgentDashboard(currentProfile?.role, currentActivePremium?.plan);
 
   if (currentUserIsAgent && !agentJobId) {
     redirect(`${returnTo}?error=agent-job`);
@@ -3235,15 +3279,7 @@ export async function claimAgentLead(formData: FormData) {
 
   await assertActiveAccount(supabase, user.id);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!isAgentRole(profile?.role)) {
-    throw new Error("Only assigned agents can claim agent leads.");
-  }
+  await requireAgentDashboardAction(supabase, user.id, "Only agents can claim agent leads.");
 
   const leadId = getString(formData, "lead_id");
 
@@ -3278,15 +3314,7 @@ export async function updateAssignedAgentLeadStatus(formData: FormData) {
 
   await assertActiveAccount(supabase, user.id);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!isAgentRole(profile?.role)) {
-    throw new Error("Only assigned agents can update agent leads.");
-  }
+  await requireAgentDashboardAction(supabase, user.id, "Only agents can update agent leads.");
 
   const leadId = getString(formData, "lead_id");
   const status = getString(formData, "status");
@@ -3329,15 +3357,7 @@ export async function updateAgentJobStatus(formData: FormData) {
 
   await assertActiveAccount(supabase, user.id);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!isAgentRole(profile?.role)) {
-    throw new Error("Only assigned agents can update agent jobs.");
-  }
+  await requireAgentDashboardAction(supabase, user.id, "Only agents can update agent jobs.");
 
   const jobId = getString(formData, "job_id");
   const status = getString(formData, "status");
