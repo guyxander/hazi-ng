@@ -7,3 +7,6 @@ env.download
 next-env.d.ts
 
 .vercel
+mobile/.expo
+mobile/android
+mobile/ios

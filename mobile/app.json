@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Hazi",
+    "slug": "hazi",
+    "scheme": "hazi",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "ng.hazi.app",
+      "versionCode": 1
+    }
+  }
+}
