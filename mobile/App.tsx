@@ -82,7 +82,7 @@ export default function App() {
             <AuctionDetailScreen auction={selectedAuction} authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} onBack={() => setSelectedAuction(null)} />
           ) : tab === "home" || tab === "find" ? (
             <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} onSelectAuction={setSelectedAuction} />
-          ) : tab === "sell" ? <SellScreen account={account} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen authenticated={Boolean(account)} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onOpenSection={setAccountSection} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
+          ) : tab === "sell" ? <SellScreen account={account} onRequireAuth={() => setAuthVisible(true)} /> : tab === "activity" ? <ActivityScreen account={account} onRequireAuth={() => setAuthVisible(true)} /> : <ProfileScreen account={account} onRequireAuth={() => setAuthVisible(true)} onOpenSection={setAccountSection} onSignOut={async () => { await signOutAccount(); setAccount(null); }} />}
           {!selectedAuction && !accountSection ? <View style={styles.nav}>
             {tabs.map((item) => {
               const selected = item.key === tab;
