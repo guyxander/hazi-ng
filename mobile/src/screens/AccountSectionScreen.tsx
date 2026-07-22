@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { loadAccountSectionData, type AccountSectionData, type DataAccountSection } from "../lib/accountData";
 import type { MobileAccount } from "../lib/auth";
+import { requestWithdrawal, savePayoutSettings, startWalletFunding } from "../lib/walletActions";
 import { colors } from "../theme";
 
 export type AccountSection = "verification" | "wallet" | "payouts" | "listings" | "agent" | "support";
@@ -81,6 +82,9 @@ export function AccountSectionScreen({ section, account, onBack, onRequireAuth }
   const [data, setData] = useState<AccountSectionData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [action, setAction] = useState<"fund" | "withdraw" | "payout" | null>(null);
+  const [amount, setAmount] = useState(""); const [bankName, setBankName] = useState(""); const [accountNumber, setAccountNumber] = useState(""); const [accountName, setAccountName] = useState(""); const [bankCode, setBankCode] = useState("");
+  const [actionLoading, setActionLoading] = useState(false); const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (!account || !(["wallet", "payouts", "listings", "agent"] as AccountSection[]).includes(section)) return;
@@ -95,7 +99,19 @@ export function AccountSectionScreen({ section, account, onBack, onRequireAuth }
         .finally(() => { if (current) setLoading(false); });
     }, 0);
     return () => { current = false; clearTimeout(loadTimer); };
-  }, [account, section]);
+  }, [account, section, reload]);
+
+  async function submitAccountAction() {
+    if (!action) return;
+    setActionLoading(true); setError(null);
+    try {
+      if (action === "fund") await startWalletFunding(Number(amount.replaceAll(",", "")));
+      else if (action === "withdraw") await requestWithdrawal({ amount: Number(amount.replaceAll(",", "")), sourceBucket: "earnings", bankName, accountNumber, accountName, bankCode });
+      else await savePayoutSettings({ bankName, accountNumber, accountName, bankCode });
+      if (action !== "fund") { Alert.alert(action === "withdraw" ? "Withdrawal requested" : "Payout settings saved", action === "withdraw" ? "Hazi will review this request before funds leave your wallet." : "The account must be verified before an eligible payout."); setAction(null); setReload((value) => value + 1); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not complete this action."); }
+    finally { setActionLoading(false); }
+  }
 
   const status = data?.status ?? copy.status(account);
   return (
@@ -117,6 +133,9 @@ export function AccountSectionScreen({ section, account, onBack, onRequireAuth }
       {data?.tiles.length ? <View style={styles.tiles}>{data.tiles.map((tile) => <View key={tile.label} style={styles.tile}><Text style={styles.tileLabel}>{tile.label}</Text><Text style={styles.tileValue}>{tile.value}</Text></View>)}</View> : null}
       {data?.rows.length ? <><Text style={styles.sectionTitle}>Recent activity</Text><View style={styles.list}>{data.rows.map((row) => <View key={row.id} style={styles.row}><View style={styles.flex}><Text style={styles.itemTitle}>{row.title}</Text><Text style={styles.itemCopy}>{row.detail}</Text></View><Text style={styles.rowStatus}>{row.status.replaceAll("_", " ")}</Text></View>)}</View></> : null}
       {data && !data.rows.length && section !== "payouts" ? <Text style={styles.empty}>No protected records are available in this section yet.</Text> : null}
+      {account && section === "wallet" ? <View style={styles.actionRow}><Pressable style={styles.smallButton} onPress={() => setAction("fund")}><Text style={styles.smallButtonText}>Fund wallet</Text></Pressable><Pressable style={styles.smallButton} onPress={() => setAction("withdraw")}><Text style={styles.smallButtonText}>Withdraw</Text></Pressable></View> : null}
+      {account && section === "payouts" ? <Pressable style={styles.smallButton} onPress={() => setAction("payout")}><Text style={styles.smallButtonText}>Update bank account</Text></Pressable> : null}
+      {action ? <View style={styles.form}><Text style={styles.itemTitle}>{action === "fund" ? "Fund wallet" : action === "withdraw" ? "Request withdrawal" : "Settlement account"}</Text>{action !== "payout" ? <TextInput value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="Amount in NGN" placeholderTextColor={colors.muted} style={styles.input} /> : null}{action !== "fund" ? <><TextInput value={bankName} onChangeText={setBankName} placeholder="Bank name" placeholderTextColor={colors.muted} style={styles.input} /><TextInput value={accountNumber} onChangeText={setAccountNumber} keyboardType="number-pad" placeholder="Account number" placeholderTextColor={colors.muted} style={styles.input} /><TextInput value={accountName} onChangeText={setAccountName} placeholder="Account name" placeholderTextColor={colors.muted} style={styles.input} /><TextInput value={bankCode} onChangeText={setBankCode} placeholder="Bank code (optional)" placeholderTextColor={colors.muted} style={styles.input} /></> : null}<View style={styles.actionRow}><Pressable style={styles.cancelButton} onPress={() => setAction(null)}><Text style={styles.smallButtonText}>Cancel</Text></Pressable><Pressable disabled={actionLoading} style={styles.smallButton} onPress={() => void submitAccountAction()}>{actionLoading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.smallButtonText}>Continue</Text>}</Pressable></View></View> : null}
       <Text style={styles.sectionTitle}>How this works</Text>
       <View style={styles.list}>{copy.items.map((item) => (
         <View key={item.title} style={styles.item}>
@@ -141,6 +160,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.text, fontSize: 19, fontWeight: "900", marginTop: 26, marginBottom: 12 }, list: { gap: 10 },
   item: { flexDirection: "row", alignItems: "center", gap: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 15 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14 }, rowStatus: { color: colors.success, fontSize: 10, fontWeight: "800", maxWidth: 120, textAlign: "right", textTransform: "capitalize" }, empty: { color: colors.muted, textAlign: "center", fontSize: 12, lineHeight: 18, padding: 20 },
+  actionRow: { flexDirection: "row", gap: 10, marginTop: 14 }, smallButton: { flex: 1, minHeight: 48, backgroundColor: colors.primary, borderRadius: 15, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 }, cancelButton: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 15, alignItems: "center", justifyContent: "center" }, smallButtonText: { color: colors.white, fontSize: 12, fontWeight: "900" }, form: { gap: 10, backgroundColor: colors.surfaceRaised, borderRadius: 18, padding: 15, marginTop: 14 }, input: { height: 51, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, color: colors.text, borderRadius: 14, paddingHorizontal: 13 },
   itemIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }, itemTitle: { color: colors.text, fontSize: 14, fontWeight: "800" }, itemCopy: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
   note: { flexDirection: "row", gap: 10, backgroundColor: colors.surfaceRaised, borderRadius: 17, padding: 15, marginTop: 18 }, noteText: { flex: 1, color: colors.muted, fontSize: 11, lineHeight: 17 }
 });
