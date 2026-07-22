@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuctionCard } from "./src/components/AuctionCard";
 import { BrandHeader } from "./src/components/BrandHeader";
@@ -35,6 +35,7 @@ export default function App() {
   const [selectedAuction, setSelectedAuction] = useState<MobileAuction | null>(null);
   const [account, setAccount] = useState<MobileAccount | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [accountSection, setAccountSection] = useState<AccountSection | null>(null);
 
   const refreshAccount = useCallback(async () => {
@@ -65,6 +66,21 @@ export default function App() {
     };
   }, [refreshAccount]);
 
+  useEffect(() => {
+    async function handleUrl(url: string) {
+      if (!supabase || !url.startsWith("hazi://auth/recovery")) return;
+      const params = new URLSearchParams(url.split("#")[1] || url.split("?")[1] || "");
+      const access_token = params.get("access_token"); const refresh_token = params.get("refresh_token");
+      if (!access_token || !refresh_token) return Alert.alert("Recovery link unavailable", "Request a new password recovery email and try again.");
+      const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (sessionError) return Alert.alert("Recovery link expired", sessionError.message);
+      setRecoveryMode(true); setAuthVisible(true);
+    }
+    const listener = Linking.addEventListener("url", ({ url }) => void handleUrl(url));
+    void Linking.getInitialURL().then((url) => { if (url) void handleUrl(url); });
+    return () => listener.remove();
+  }, []);
+
   const visibleAuctions = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return auctions;
@@ -75,7 +91,7 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <StatusBar style="light" />
-        {authVisible ? <AuthScreen onClose={() => setAuthVisible(false)} onAuthenticated={() => { void refreshAccount(); setAuthVisible(false); }} /> : <View style={styles.app}>
+        {authVisible ? <AuthScreen recoveryMode={recoveryMode} onClose={() => { setAuthVisible(false); setRecoveryMode(false); }} onAuthenticated={() => { void refreshAccount(); setAuthVisible(false); setRecoveryMode(false); }} /> : <View style={styles.app}>
           {accountSection ? (
             <AccountSectionScreen section={accountSection} account={account} onBack={() => setAccountSection(null)} onRequireAuth={() => setAuthVisible(true)} />
           ) : selectedAuction ? (

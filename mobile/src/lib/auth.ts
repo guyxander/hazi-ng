@@ -57,3 +57,17 @@ export async function createHaziAccount(fullName: string, email: string, passwor
 export async function signOutAccount() {
   if (supabase) await supabase.auth.signOut();
 }
+
+export async function sendPasswordRecovery(email: string) {
+  if (!supabase) throw new Error("Hazi mobile is not connected to Supabase.");
+  if (!email.trim()) throw new Error("Enter your email address first.");
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: "hazi://auth/recovery" });
+  if (error) throw error;
+}
+
+export async function updatePassword(password: string) {
+  if (!supabase) throw new Error("Hazi mobile is not connected to Supabase.");
+  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}/.test(password)) throw new Error("Use at least 8 characters with uppercase, lowercase, number, and symbol.");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
