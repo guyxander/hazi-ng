@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuctionCard } from "./src/components/AuctionCard";
+import { BrandHeader } from "./src/components/BrandHeader";
 import { getActiveAuctions } from "./src/lib/marketplace";
+import { ActivityScreen } from "./src/screens/ActivityScreen";
+import { AuctionDetailScreen } from "./src/screens/AuctionDetailScreen";
+import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { SellScreen } from "./src/screens/SellScreen";
 import { colors } from "./src/theme";
 import type { MobileAuction } from "./src/types";
 
@@ -24,6 +29,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAuction, setSelectedAuction] = useState<MobileAuction | null>(null);
 
   useEffect(() => {
     getActiveAuctions()
@@ -43,12 +49,12 @@ export default function App() {
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <StatusBar style="light" />
         <View style={styles.app}>
-          {tab === "home" || tab === "find" ? (
-            <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} />
-          ) : (
-            <ProtectedWorkflow tab={tab} />
-          )}
-          <View style={styles.nav}>
+          {selectedAuction ? (
+            <AuctionDetailScreen auction={selectedAuction} onBack={() => setSelectedAuction(null)} />
+          ) : tab === "home" || tab === "find" ? (
+            <MarketplaceScreen tab={tab} auctions={visibleAuctions} loading={loading} error={error} query={query} setQuery={setQuery} onSelectAuction={setSelectedAuction} />
+          ) : tab === "sell" ? <SellScreen /> : tab === "activity" ? <ActivityScreen /> : <ProfileScreen />}
+          {!selectedAuction ? <View style={styles.nav}>
             {tabs.map((item) => {
               const selected = item.key === tab;
               const central = item.key === "sell";
@@ -61,14 +67,14 @@ export default function App() {
                 </Pressable>
               );
             })}
-          </View>
+          </View> : null}
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
-function MarketplaceScreen({ tab, auctions, loading, error, query, setQuery }: { tab: "home" | "find"; auctions: MobileAuction[]; loading: boolean; error: string | null; query: string; setQuery: (value: string) => void }) {
+function MarketplaceScreen({ tab, auctions, loading, error, query, setQuery, onSelectAuction }: { tab: "home" | "find"; auctions: MobileAuction[]; loading: boolean; error: string | null; query: string; setQuery: (value: string) => void; onSelectAuction: (auction: MobileAuction) => void }) {
   return (
     <FlatList
       style={styles.screen}
@@ -78,10 +84,7 @@ function MarketplaceScreen({ tab, auctions, loading, error, query, setQuery }: {
       ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
       ListHeaderComponent={(
         <View>
-          <View style={styles.header}>
-            <View><Text style={styles.logo}>hazi</Text><Text style={styles.kicker}>VERIFIED DECLUTTER AUCTIONS</Text></View>
-            <Pressable accessibilityLabel="Notifications" style={styles.iconButton}><Ionicons name="notifications-outline" size={24} color={colors.text} /></Pressable>
-          </View>
+          <BrandHeader />
           {tab === "home" ? (
             <View style={styles.hero}>
               <Text style={styles.heroEyebrow}>MAKE SPACE. MAKE MONEY.</Text>
@@ -98,27 +101,9 @@ function MarketplaceScreen({ tab, auctions, loading, error, query, setQuery }: {
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
       )}
-      renderItem={({ item }) => <AuctionCard auction={item} onPress={() => undefined} />}
+      renderItem={({ item }) => <AuctionCard auction={item} onPress={() => onSelectAuction(item)} />}
       ListEmptyComponent={!loading && !error ? <Text style={styles.empty}>No active auctions match your search.</Text> : null}
     />
-  );
-}
-
-function ProtectedWorkflow({ tab }: { tab: Exclude<Tab, "home" | "find"> }) {
-  const content = {
-    sell: ["Sell with Hazi", "Sign in and complete the required profile checks before publishing an auction."],
-    activity: ["Your activity", "Bids, accepted offers, escrow updates, delivery progress, and disputes will appear here."],
-    profile: ["Your Hazi account", "Sign in to manage verification, wallet, payouts, listings, agent work, and account settings."]
-  }[tab];
-
-  return (
-    <View style={styles.protected}>
-      <View style={styles.protectedIcon}><Ionicons name={tab === "sell" ? "pricetag-outline" : tab === "activity" ? "pulse-outline" : "shield-checkmark-outline"} size={42} color={colors.primary} /></View>
-      <Text style={styles.protectedTitle}>{content[0]}</Text>
-      <Text style={styles.protectedCopy}>{content[1]}</Text>
-      <Pressable style={styles.primaryButton}><Text style={styles.primaryButtonText}>Sign in to continue</Text></Pressable>
-      <Text style={styles.guardrail}>Hazi role, auction, wallet, and escrow rules remain unchanged.</Text>
-    </View>
   );
 }
 
@@ -127,10 +112,6 @@ const styles = StyleSheet.create({
   app: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1 },
   content: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 28 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 },
-  logo: { color: colors.white, backgroundColor: colors.primary, borderRadius: 17, overflow: "hidden", paddingHorizontal: 18, paddingVertical: 8, fontSize: 30, fontWeight: "900", letterSpacing: -2 },
-  kicker: { color: colors.muted, fontSize: 9, fontWeight: "800", letterSpacing: 1.2, marginTop: 8 },
-  iconButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
   hero: { backgroundColor: colors.primary, borderRadius: 28, padding: 24, minHeight: 192, justifyContent: "flex-end", marginBottom: 18 },
   heroEyebrow: { color: colors.white, fontSize: 11, fontWeight: "900", letterSpacing: 1.4 },
   heroTitle: { color: colors.white, fontSize: 34, lineHeight: 37, fontWeight: "900", letterSpacing: -1.2, marginTop: 8, maxWidth: 310 },
@@ -147,12 +128,5 @@ const styles = StyleSheet.create({
   selectedIcon: { backgroundColor: colors.surfaceRaised, borderRadius: 14, padding: 6 },
   sellButton: { width: 58, height: 48, borderRadius: 18, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", marginTop: -18 },
   navLabel: { color: colors.muted, fontSize: 11, fontWeight: "600" },
-  navLabelSelected: { color: colors.text },
-  protected: { flex: 1, paddingHorizontal: 30, alignItems: "center", justifyContent: "center" },
-  protectedIcon: { width: 88, height: 88, borderRadius: 30, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center", marginBottom: 24 },
-  protectedTitle: { color: colors.text, fontSize: 29, fontWeight: "900", textAlign: "center" },
-  protectedCopy: { color: colors.muted, fontSize: 16, lineHeight: 24, textAlign: "center", marginTop: 12, maxWidth: 340 },
-  primaryButton: { marginTop: 28, backgroundColor: colors.primary, borderRadius: 18, paddingHorizontal: 28, paddingVertical: 16, width: "100%", maxWidth: 360, alignItems: "center" },
-  primaryButtonText: { color: colors.white, fontSize: 16, fontWeight: "900" },
-  guardrail: { color: colors.muted, fontSize: 11, lineHeight: 17, textAlign: "center", marginTop: 18, maxWidth: 320 }
+  navLabelSelected: { color: colors.text }
 });
