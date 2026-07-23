@@ -8,11 +8,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
+    "owner": "guyxander",
+    "extra": { "eas": { "projectId": "e6e24558-0956-47fe-a95d-625d174fe8c8" } },
+    "plugins": [["expo-notifications", { "color": "#0B6B50", "defaultChannel": "hazi-updates" }]],
     "updates": { "fallbackToCacheTimeout": 0 },
     "android": {
       "package": "ng.hazi.app",
       "versionCode": 1,
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS"],
       "intentFilters": [{ "action": "VIEW", "autoVerify": false, "data": [{ "scheme": "hazi" }], "category": ["BROWSABLE", "DEFAULT"] }]
     },
     "ios": { "bundleIdentifier": "ng.hazi.app", "supportsTablet": false }

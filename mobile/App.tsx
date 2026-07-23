@@ -7,6 +7,7 @@ import { AuctionCard } from "./src/components/AuctionCard";
 import { BrandHeader } from "./src/components/BrandHeader";
 import { loadCurrentAccount, signOutAccount, type MobileAccount } from "./src/lib/auth";
 import { getActiveAuctions, supabase } from "./src/lib/marketplace";
+import { registerNativePush } from "./src/lib/push";
 import { ActivityScreen } from "./src/screens/ActivityScreen";
 import { AccountSectionScreen, type AccountSection } from "./src/screens/AccountSectionScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
@@ -66,6 +67,8 @@ export default function App() {
       subscription.unsubscribe();
     };
   }, [refreshAccount]);
+
+  useEffect(() => { if (account) void registerNativePush(account.user.id).catch(() => undefined); }, [account]);
 
   useEffect(() => {
     async function handleUrl(url: string) {
