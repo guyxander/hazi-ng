@@ -15,6 +15,10 @@ Keep the upload keystore and its password outside the repository. Before running
 
 The `withHaziAndroidSigning` config plugin injects the release signing configuration during Expo prebuild. It never contains or copies signing secrets.
 
+## Firebase client configuration
+
+Download the Android `google-services.json` for package `ng.hazi.app` from Firebase and save it locally as `mobile/google-services.json`. This file is intentionally ignored by Git and must be supplied securely on each build machine or CI environment.
+
 ## Build
 
 From `mobile`, install the locked dependencies and regenerate Android:
