@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "68375050171",
+    "project_id": "hazi-f97d0",
+    "storage_bucket": "hazi-f97d0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68375050171:android:e929d742b5f8d225a6f69e",
+        "android_client_info": {
+          "package_name": "ng.hazi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2XN3u_9XvdkIhiH1dZnUs1xB_V_IVPys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
