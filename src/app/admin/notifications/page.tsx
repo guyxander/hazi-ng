@@ -11,7 +11,7 @@ export default async function AdminExternalNotificationsPage() {
     return null;
   }
 
-  const [{ data: notifications }, { count: activePushCount }, { count: failedPushCount }, { count: sentPushCount }, { count: failedPushDeliveryCount }] = await Promise.all([
+  const [{ data: notifications }, { count: activePushCount }, { count: failedPushCount }, { count: sentPushCount }, { count: failedPushDeliveryCount }, { count: activeMobileCount }, { count: failedMobileCount }, { count: sentMobileCount }, { count: failedMobileDeliveryCount }] = await Promise.all([
     supabase
       .from("external_notification_outbox")
       .select("id,recipient_user_id,channel,destination,subject,body,status,related_entity_type,related_entity_id,provider,provider_message_id,failure_reason,sent_at,created_at,profiles!external_notification_outbox_recipient_user_id_fkey(id,full_name,phone)")
@@ -20,7 +20,11 @@ export default async function AdminExternalNotificationsPage() {
     supabase.from("push_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
     supabase.from("push_subscriptions").select("*", { count: "exact", head: true }).eq("status", "failed"),
     supabase.from("notification_push_deliveries").select("*", { count: "exact", head: true }).eq("status", "sent"),
-    supabase.from("notification_push_deliveries").select("*", { count: "exact", head: true }).eq("status", "failed")
+    supabase.from("notification_push_deliveries").select("*", { count: "exact", head: true }).eq("status", "failed"),
+    supabase.from("mobile_push_tokens").select("*", { count: "exact", head: true }).eq("status", "active").not("native_push_token", "is", null),
+    supabase.from("mobile_push_tokens").select("*", { count: "exact", head: true }).eq("status", "failed"),
+    supabase.from("mobile_notification_deliveries").select("*", { count: "exact", head: true }).eq("status", "sent"),
+    supabase.from("mobile_notification_deliveries").select("*", { count: "exact", head: true }).eq("status", "failed")
   ]);
 
   return (
@@ -29,7 +33,7 @@ export default async function AdminExternalNotificationsPage() {
         <div>
           <span className="badge badge-premium"><BellRing size={14} /> External notifications</span>
           <h1 className="section-title mt-4">Notification delivery</h1>
-          <p className="mt-2 text-[var(--muted)]">Review queued SMS/email messages and browser push delivery health.</p>
+          <p className="mt-2 text-[var(--muted)]">Review queued SMS/email messages plus browser and native mobile push health.</p>
         </div>
         <Link href="/admin" className="button button-outline">Back to admin</Link>
       </div>
@@ -50,6 +54,25 @@ export default async function AdminExternalNotificationsPage() {
         <div className="card p-5">
           <p className="text-sm font-bold text-[var(--muted)]">Failed browser pushes</p>
           <p className="mt-2 text-3xl font-extrabold text-[var(--primary)]">{failedPushDeliveryCount ?? 0}</p>
+        </div>
+      </section>
+
+      <section className="mb-6 grid gap-4 md:grid-cols-4">
+        <div className="card p-5">
+          <p className="text-sm font-bold text-[var(--muted)]">Active native mobile tokens</p>
+          <p className="mt-2 text-3xl font-extrabold text-[var(--primary)]">{activeMobileCount ?? 0}</p>
+        </div>
+        <div className="card p-5">
+          <p className="text-sm font-bold text-[var(--muted)]">Failed native mobile tokens</p>
+          <p className="mt-2 text-3xl font-extrabold text-[var(--primary)]">{failedMobileCount ?? 0}</p>
+        </div>
+        <div className="card p-5">
+          <p className="text-sm font-bold text-[var(--muted)]">Sent native mobile pushes</p>
+          <p className="mt-2 text-3xl font-extrabold text-[var(--primary)]">{sentMobileCount ?? 0}</p>
+        </div>
+        <div className="card p-5">
+          <p className="text-sm font-bold text-[var(--muted)]">Failed native mobile pushes</p>
+          <p className="mt-2 text-3xl font-extrabold text-[var(--primary)]">{failedMobileDeliveryCount ?? 0}</p>
         </div>
       </section>
 

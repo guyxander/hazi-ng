@@ -1,5 +1,5 @@
 import { formatDateTime } from "@/lib/format";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { LifeBuoy, ShieldCheck } from "lucide-react";
 import { submitSupportTicket } from "@/app/actions";
 import { getSafeUser } from "@/lib/supabase/auth";
@@ -20,7 +20,21 @@ export default async function SupportPage({
   const user = await getSafeUser(supabase);
 
   if (!user) {
-    redirect("/auth?next=/support");
+    return (
+      <main className="container py-10">
+        <section className="card mx-auto max-w-2xl p-6">
+          <span className="badge badge-trust"><LifeBuoy size={14} /> Hazi Support</span>
+          <h1 className="section-title mt-4">How can we help?</h1>
+          <p className="mt-3 text-[var(--muted)]">Get help with accounts, auctions, bids, wallet payments, escrow, delivery, verification, or safety.</p>
+          <div className="mt-5 grid gap-3 text-sm">
+            <p><strong>Email:</strong> <a className="font-bold text-[var(--primary)]" href="mailto:hello@hazi.ng">hello@hazi.ng</a></p>
+            <p><strong>WhatsApp:</strong> <a className="font-bold text-[var(--primary)]" href="https://wa.me/2349029840305">09029840305</a></p>
+          </div>
+          <p className="mt-5 text-sm text-[var(--muted)]">Sign in to open and track a private support ticket.</p>
+          <Link className="button button-primary mt-4" href="/auth?next=/support">Sign in for support</Link>
+        </section>
+      </main>
+    );
   }
 
   const [{ data: tickets }, { data: profile }] = await Promise.all([
