@@ -5,6 +5,7 @@
     "scheme": "hazi",
     "version": "0.1.0",
     "description": "Hazi trusted auctions, protected payments, and decluttering services.",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
@@ -15,9 +16,10 @@
     "android": {
       "package": "ng.hazi.app",
       "versionCode": 1,
+      "adaptiveIcon": { "foregroundImage": "./assets/icon.png", "backgroundColor": "#F4F1E8" },
       "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS"],
       "intentFilters": [{ "action": "VIEW", "autoVerify": false, "data": [{ "scheme": "hazi" }], "category": ["BROWSABLE", "DEFAULT"] }]
     },
-    "ios": { "bundleIdentifier": "ng.hazi.app", "supportsTablet": false }
+    "ios": { "bundleIdentifier": "ng.hazi.app", "supportsTablet": false, "icon": "./assets/icon.png" }
   }
 }
