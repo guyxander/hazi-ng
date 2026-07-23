@@ -11,7 +11,10 @@
     "newArchEnabled": false,
     "owner": "guyxander",
     "extra": { "eas": { "projectId": "e6e24558-0956-47fe-a95d-625d174fe8c8" } },
-    "plugins": [["expo-notifications", { "color": "#0B6B50", "defaultChannel": "hazi-updates" }]],
+    "plugins": [
+      ["expo-notifications", { "color": "#0B6B50", "defaultChannel": "hazi-updates" }],
+      "./plugins/withHaziAndroidSigning"
+    ],
     "updates": { "fallbackToCacheTimeout": 0 },
     "android": {
       "package": "ng.hazi.app",
