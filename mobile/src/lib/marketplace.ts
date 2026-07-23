@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
+import { AppState, Platform } from "react-native";
 import { demoAuctions } from "../data/demo";
 import type { MobileAuction } from "../types";
 
@@ -17,6 +18,14 @@ export const supabase = supabaseUrl && supabaseKey
       }
     })
   : null;
+
+const mobileSupabase = supabase;
+if (mobileSupabase && Platform.OS !== "web") {
+  AppState.addEventListener("change", (state) => {
+    if (state === "active") mobileSupabase.auth.startAutoRefresh();
+    else mobileSupabase.auth.stopAutoRefresh();
+  });
+}
 
 export async function getActiveAuctions(): Promise<MobileAuction[]> {
   if (!supabase) return demoAuctions;
