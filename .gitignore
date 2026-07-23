@@ -13,3 +13,5 @@ mobile/android
 mobile/ios
 dist-*/
 mobile/dist-*/
+
+.env*
