@@ -9,8 +9,17 @@ create table if not exists public.mobile_push_tokens (
   updated_at timestamptz not null default now()
 );
 alter table public.mobile_push_tokens enable row level security;
+
+drop policy if exists "Users read own mobile push tokens" on public.mobile_push_tokens;
+drop policy if exists "Users insert own mobile push tokens" on public.mobile_push_tokens;
+drop policy if exists "Users update own mobile push tokens" on public.mobile_push_tokens;
+drop policy if exists "Users delete own mobile push tokens" on public.mobile_push_tokens;
+
 create policy "Users read own mobile push tokens" on public.mobile_push_tokens for select to authenticated using ((select auth.uid()) = user_id);
 create policy "Users insert own mobile push tokens" on public.mobile_push_tokens for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy "Users update own mobile push tokens" on public.mobile_push_tokens for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 create policy "Users delete own mobile push tokens" on public.mobile_push_tokens for delete to authenticated using ((select auth.uid()) = user_id);
+
+revoke all privileges on table public.mobile_push_tokens from anon;
+revoke all privileges on table public.mobile_push_tokens from authenticated;
 grant select, insert, update, delete on public.mobile_push_tokens to authenticated;
